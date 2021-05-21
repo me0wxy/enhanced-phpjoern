@@ -1,2 +1,2 @@
 # enhanced-phpjoern
- extend CPG by FileIncludeGraph and ClassHierachyGraph
+ extends CPG by FileIncludeGraph and ClassHierachyGraph, optimizes some issues
