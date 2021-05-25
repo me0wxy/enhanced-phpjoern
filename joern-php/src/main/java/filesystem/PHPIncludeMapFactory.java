@@ -17,12 +17,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 public class PHPIncludeMapFactory {
+    // filesystem in PHPJoern
     private static HashMap<Long, FSNode> FileNodes = new HashMap<Long, FSNode>();
     private static HashMap<Long, FSNode> DirectoryNodes = new HashMap<Long, FSNode>();
     private static LinkedList<FSEdge> DirectoryEdges = new LinkedList<>();
+    // a Map to save all constants
     private static HashMap<String, Object> ConstMap = new HashMap<>();
     private static IncludeMap im;
-
     // collect some useful expressions/declarations
     private static LinkedList<IncludeOrEvalExpression> includeExpressions = new LinkedList<>();
     private static LinkedList<Object> constRelatedExpressions = new LinkedList<>();
@@ -88,8 +89,11 @@ public class PHPIncludeMapFactory {
     }
 
     private static void createConstantMap(){
-        //updateConstMap("__DIR__",".");
+        // PHP default constants (may have others)
         updateConstMap("DIRECTORY_SEPARATOR","/");
+
+        // Traverse all constant declarations
+        // some constants may rely on others, so do traverse multiple times
         LinkedList<Object> waitToHandle = new LinkedList<>(constRelatedExpressions);
         int waitSize = waitToHandle.size();
         int lastWaitSize = waitSize;
@@ -98,19 +102,14 @@ public class PHPIncludeMapFactory {
                 if(waitSize == 0){
                     waitSize = waitToHandle.size();
                     if(lastWaitSize == waitSize){
-/*                        for(Object boom:waitToHandle){
-                            System.out.println(boom);
-                            if(boom instanceof CallExpressionBase){
-                                System.out.println(((CallExpressionBase)boom).getArgumentList().getArgument(0).getEscapedCodeStr());
-                                System.out.println(((CallExpressionBase)boom).getArgumentList().getArgument(1));
-                            }
-                        }*/
+                        // done, or we can't parse all constant declarations left
                         break;
                     }
                     lastWaitSize = waitSize;
                 }
                 Object expression = waitToHandle.removeFirst();
                 --waitSize;
+                // define("ADMIN_PATH","wp-admin");
                 if(expression instanceof CallExpressionBase){
                     CallExpressionBase callexpr = (CallExpressionBase)expression;
                     if(callexpr.getTargetFunc() instanceof Identifier){
@@ -125,6 +124,7 @@ public class PHPIncludeMapFactory {
                         }
                     }
                 }
+                // const ABSPATH = ...;
                 else if(expression instanceof ConstantDeclaration){
                     Iterator<ConstantElement> it = ((ConstantDeclaration)expression).iterator();
                     while(it.hasNext()){
@@ -154,23 +154,29 @@ public class PHPIncludeMapFactory {
                 e.printStackTrace();
             }
         }
-        /*ConstMap.forEach((key,value)->{
-            System.out.println(key+"=>"+value);
-        });*/
     }
 
+    /*
+    * To parse a Expression (usually in Constant Declatations and Include Expressions) to its string value
+    *
+    * @return String
+    */
     public static String parseStrParam(Expression expression){
+        // string or int, return directly
         if(expression instanceof StringExpression || expression instanceof IntegerExpression)
             return expression.getEscapedCodeStr();
+        // string concat, parse left and right
         else if(expression instanceof BinaryOperationExpression){
             Expression left = ((BinaryOperationExpression)expression).getLeft();
             Expression right = ((BinaryOperationExpression)expression).getRight();
             return parseStrParam(left)+parseStrParam(right);
         }
+        // constants, check in ConstMap
         else if(expression instanceof Constant){
             String constKey = ((Constant)expression).getIdentifier().getNameChild().getEscapedCodeStr();
             return ConstMap.containsKey(constKey) ? (String)ConstMap.get(constKey) : "WAIT_TO_HANDLE";
         }
+        // __DIR__ and __FILE__ are magic constants
         else if(expression instanceof MagicConstant){
             String flags = expression.getProperty(ASTNodeProperties.FLAGS);
             switch (flags){
@@ -184,7 +190,7 @@ public class PHPIncludeMapFactory {
                     return flags;
             }
         }
-        // mxy: we can handle dirname() and getcwd()
+        // function call, we only handle dirname() and getcwd()
         else if(expression instanceof CallExpressionBase){
             CallExpressionBase callexpr = (CallExpressionBase)expression;
             if(!(callexpr.getTargetFunc() instanceof Identifier))
@@ -200,6 +206,7 @@ public class PHPIncludeMapFactory {
                 return ".";
             }
         }
+        // others
         return "UNSOLVED_DYNAMIC_STRING";
     }
 
@@ -237,11 +244,9 @@ public class PHPIncludeMapFactory {
             String filepath = parseStrParam(includexpr.getIncludeOrEvalExpression()).replace("//","/");
 
             if(filepath.contains("UNSOLVED_DYNAMIC_STRING") || filepath.contains("WAIT_TO_HANDLE")){
-                // mxy: do a trick match
+                // do a trick match, if the FILENAME of filepath appears only once, we will connect
                 if(!filepath.contains("/")){
                     dynamicNotHandled++;
-                    //System.out.println(filepath);
-                    //debug(includexpr);
                     continue;
                 }
                 String trickfilename = filepath.substring(filepath.lastIndexOf("/")+1);
@@ -252,8 +257,6 @@ public class PHPIncludeMapFactory {
                 }
                 else{
                     dynamicNotHandled++;
-                    //System.out.println(filepath);
-                    //debug(includexpr);
                 }
             }
             else{
@@ -269,7 +272,6 @@ public class PHPIncludeMapFactory {
                     else if(!pathElem.equals("."))
                         nowDirectory = im.getChildDirectoryOrFile(nowDirectory, pathElem);
                     if(nowDirectory == null){
-                        // System.out.println(filepath);
                         break;
                     }
                 }

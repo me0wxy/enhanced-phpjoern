@@ -323,7 +323,7 @@ public class PHPCGFactory {
 											}
 										}
 									}
-									// NEW assignment, like
+									// NEW assignment, like...
 									else{
 										// $a = new Classname();
 										if(expr instanceof AssignmentExpression && ((AssignmentExpression)expr).getRight() instanceof NewExpression){
