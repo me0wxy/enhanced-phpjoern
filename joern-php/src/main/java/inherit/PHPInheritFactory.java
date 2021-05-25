@@ -11,6 +11,7 @@ import ast.php.statements.blockstarters.TraitAdaptations;
 import ast.php.statements.blockstarters.UseTrait;
 import ast.statements.UseElement;
 import filesystem.PHPIncludeMapFactory;
+import inputModules.csv.PHPCSVNodeTypes;
 import misc.MultiHashMap;
 import org.apache.commons.lang3.ObjectUtils;
 import outputModules.common.Writer;
@@ -34,6 +35,23 @@ public class PHPInheritFactory {
     // for MXY
     private static MultiHashMap<String, String> ClassHierarchyMap = new MultiHashMap<String, String>();
 
+    // count missing edges for extends/implements edges
+    private static long baseLacked = 0;
+    private static long baseLackedFlag = 0;
+
+    private static long baseAmbiguous = 0;
+    private static Boolean baseAmbiguousFlag = false;
+
+    // count missing edges for trait edges
+    private static long traitLacked = 0;
+    private static long traitLackedFlag = 0;
+
+    private static long traitAmbiguous = 0;
+    private static Boolean traitAmbiguousFlag = false;
+
+    private static long baseCycled = 0;
+    private static LinkedList<ClassDef> baseCycledList = new LinkedList<ClassDef>();
+
     // create an Inherit Graph
     public static IG newInstance() {
         IG ig = new IG();
@@ -41,7 +59,7 @@ public class PHPInheritFactory {
         createInheritEdges(ig);
         createTraitEdges(ig);
 
-       // createInheritEdgesByInclude(ig);
+        // createInheritEdgesByInclude(ig);
 
         return ig;
     }
@@ -98,6 +116,10 @@ public class PHPInheritFactory {
         // which refers to an ambiguous situation
         if (count != 1) {
             res = null;
+            if (count >= 2)
+                baseAmbiguousFlag = true;
+            else if (count == 0)
+                baseLackedFlag ++;
         }
         return res;
     }
@@ -124,8 +146,13 @@ public class PHPInheritFactory {
             }
         }
 
-        if (count != 1)
+        if (count != 1) {
             ret = null;
+            if (count >= 2)
+                baseAmbiguousFlag = true;
+            else if (count == 0)
+                baseLackedFlag ++;
+        }
 
         return ret;
     }
@@ -143,8 +170,10 @@ public class PHPInheritFactory {
         HashSet<Long> targetIncludeFileIds = PHPIncludeMapFactory.getIncludeFilesSet(childFileId);
 
         // No include graph for childFileid, return null
-        if (targetIncludeFileIds == null || targetIncludeFileIds.size() == 1)
+        if (targetIncludeFileIds == null || targetIncludeFileIds.size() == 1) {
+            baseLackedFlag ++;
             return null;
+        }
 
         for (Long targetFileId : targetIncludeFileIds) {
             System.out.println(targetFileId);
@@ -160,8 +189,13 @@ public class PHPInheritFactory {
             }
         }
 
-        if (count != 1)
+        if (count != 1) {
             res = null;
+            if (count >=2)
+                baseAmbiguousFlag = true;
+            else if (count == 0)
+                baseLackedFlag ++;
+        }
 
         return res;
     }
@@ -238,18 +272,20 @@ public class PHPInheritFactory {
         long inheritNodeNum = 0;
         long successfullyBuiltExtends = 0;
         long successfullyBuiltImplements = 0;
+        long successfullyBuilt = 0;
 
         try {
             for (ClassDef classdef : classDefs) {
 
                 String fullClassName = classdef.getNamewithNS();
-                //System.out.println("Now we are visiting the AST_CLASS ASTNode : " + classdef.getName() + " ( " + fullClassName + " )");
+                System.out.println("Now we are visiting the AST_CLASS ASTNode : " + classdef.getName() + " ( " + fullClassName + " )");
 
                 int childCount = classdef.getChildCount();
                 Long fileid = classdef.getFileId();
-                //System.out.println("The fileid is : " + fileid.toString());
+                System.out.println("The fileid is : " + fileid.toString());
 
                 for (int i = 0; i < childCount; i++) {
+
                     ASTNode childNode = classdef.getChild(i);
                     // We do not deal with NullNode
                     if (childNode instanceof NullNode)
@@ -258,7 +294,12 @@ public class PHPInheritFactory {
                     // class a extends b
                     // single-inheritance
                     if (childNode instanceof Identifier) {
+                        baseLackedFlag = 0;
+                        baseAmbiguousFlag = false;
                         inheritNodeNum ++;
+
+                        // NAME_FQ or NAME_NOT_FQ
+                        String identifierFlag = childNode.getFlags();
 
                         // [ Identifier ] ==> [ StringExpression ]
                         int stringExpCount = childNode.getChildCount();
@@ -266,6 +307,10 @@ public class PHPInheritFactory {
                             throw new ArrayIndexOutOfBoundsException("Identifier Node should have at least one child.");
                         StringExpression stringExpression = (StringExpression) childNode.getChild(0);
                         String code = stringExpression.getEscapedCodeStr();
+
+//                        if (identifierFlag.equals(PHPCSVNodeTypes.FLAG_NAME_FQ))
+//                            code = "\\" + code;
+
                         // get parent class
                         // ClassDef superClass = getClassDefByCode(namespace, code, fileid);
                         ClassDef superClass = getParentClassInSameNamespace(code, classdef);
@@ -280,15 +325,31 @@ public class PHPInheritFactory {
                         }
 
                         if (superClass != null) {
+                            String superClassFullName = superClass.getNamewithNS();
+                            String subClassFullName = subClass.getNamewithNS();
+                            if (subClassFullName.equals(superClassFullName)) {
+                                baseCycled++;
+                                baseCycledList.add(superClass);
+                                superClass = null;
+                            }
+                        }
+
+                        if (superClass != null) {
                             addInheritExtendsEdge(ig, subClass, superClass);
                             successfullyBuiltExtends ++;
+                            successfullyBuilt ++;
 
                             // ClassHierarchyMap.add(subClass.getNamewithNS(), superClass.getNamewithNS());
 
-                            //System.out.println("Child Class : " + subClass.getName() + "( " + subClass.getNamewithNS() +
-                            //        " ) ==> Base Class : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
+                            System.out.println("Child Class : " + subClass.getName() + "( " + subClass.getNamewithNS() +
+                                    " ) ==> Base Class : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
                         } else {
-                            System.err.println("Cannot find Base Class for " + classdef.getName() +
+                            if (baseLackedFlag == 3)
+                                baseLacked ++;
+                            if (baseAmbiguousFlag == true)
+                                baseAmbiguous ++;
+
+                            System.out.println("Cannot find Base Class for " + classdef.getName() +
                                     " ( " + classdef.getNamewithNS() + " )");
                         }
                     }
@@ -296,16 +357,26 @@ public class PHPInheritFactory {
                     // class a implements c(,d)
                     // multi-implementations
                     if (childNode instanceof IdentifierList) {
-                        inheritNodeNum ++;
 
                         // [ IdentifierList ] ==> [ Identifier ] ==> [ StringExpression ]
                         int idfCount = childNode.getChildCount();
                         if (0 == idfCount)
                             throw new ArrayIndexOutOfBoundsException("Identifier Node should have at least one child");
                         for (int k = 0; k < idfCount; k++) {
+                            baseLackedFlag = 0;
+                            baseAmbiguousFlag = false;
+                            inheritNodeNum ++;
+
                             Identifier identifier = (Identifier) childNode.getChild(k);
+
+                            // NAME_FQ or NAME_NOT_FQ
+                            String identifierFlag = identifier.getFlags();
+
                             StringExpression stringExpression = (StringExpression) identifier.getChild(0);
                             String code = stringExpression.getEscapedCodeStr();
+//                            if (identifierFlag.equals(PHPCSVNodeTypes.FLAG_NAME_FQ))
+//                                code = "\\" + code;
+
                             // get parent class
                             // ClassDef superClass = getClassDefByCode(namespace, code, fileid);
                             ClassDef superClass = getParentClassInSameNamespace(code, classdef);
@@ -319,17 +390,33 @@ public class PHPInheritFactory {
                                 superClass = getParentClassByInclude(fileid, code);
                             }
 
+                            if (superClass != null) {
+                                String superClassFullName = superClass.getNamewithNS();
+                                String subClassFullName = subClass.getNamewithNS();
+                                if (subClassFullName.equals(superClassFullName)) {
+                                    baseCycled++;
+                                    baseCycledList.add(superClass);
+                                    superClass = null;
+                                }
+                            }
+
                             // In case that superClass is empty
                             if (superClass != null) {
                                 addInheritImplementsEdges(ig, subClass, superClass);
                                 successfullyBuiltImplements ++;
+                                successfullyBuilt ++;
 
                                 ClassHierarchyMap.add(subClass.getNamewithNS(), superClass.getNamewithNS());
 
-                                //System.out.println("Child Interface : " + subClass.getName() + "( " + subClass.getNamewithNS() +
-                                //       " ) ==> Base Interface : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
+                                System.out.println("Child Interface : " + subClass.getName() + "( " + subClass.getNamewithNS() +
+                                        " ) ==> Base Interface : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
                             } else {
-                                System.err.println("Cannot find Base Interface for " + classdef.getName() +
+                                if (baseLackedFlag == 3)
+                                    baseLacked ++;
+                                if (baseAmbiguousFlag == true)
+                                    baseAmbiguous ++;
+
+                                System.out.println("Cannot find Base Interface for " + classdef.getName() +
                                         " ( " + classdef.getNamewithNS() + " )");
                             }
                         }
@@ -346,8 +433,25 @@ public class PHPInheritFactory {
         System.out.println("----------------------------------------");
         System.out.println("Total " + classDefNodesNum + " Classes in whole files.");
         System.out.println("Total " + inheritNodeNum + " EXTENDS/IMPLEMENTS statements in whole files.");
-        System.out.println("Successfully connected: " + successfullyBuiltExtends + " Extends Edges. ");
-        System.out.println("Successfully connected: " + successfullyBuiltImplements + " Implements Edges.");
+        System.out.println("Successfully connected: " + successfullyBuilt + " Edges.");
+        System.out.println("Including: " + successfullyBuiltExtends + " Extends Edges. ");
+        System.out.println("Including: " + successfullyBuiltImplements + " Implements Edges.");
+        System.out.println(baseAmbiguous + " edges are ambiguous.");
+        System.out.println(baseLacked + " edges lost due to lack of Base Definition node.");
+        if (baseCycledList.size() != 0) {
+            System.out.println("Base Cycled Classes are :");
+            for (ClassDef item : baseCycledList) {
+                System.out.println(item.getNamewithNS());
+            }
+        }
+
+        float mappedExtendsPercent = inheritNodeNum == 0 ? 100 : ((float) successfullyBuilt / (float) inheritNodeNum) * 100;
+        System.out.println( "=> " + mappedExtendsPercent + " % " +
+                "of EXTENDS/IMPLEMENTS edges could be successfully connected.");
+        float ambiguousPropotion = inheritNodeNum == 0 ? 0 : ((float) baseAmbiguous / (float) inheritNodeNum) * 100;
+        System.out.println("Ambiguous not handled: " + ambiguousPropotion + " %.");
+        float lackedProption = inheritNodeNum == 0 ? 0 : ((float) (baseLacked + baseCycled) / (float) inheritNodeNum) * 100;
+        System.out.println("Lacked Base Definition not handled: " + lackedProption + " %.");
     }
 
     public static ClassDef getClassTraitByNamespace(String traitName) {
@@ -365,7 +469,12 @@ public class PHPInheritFactory {
         }
 
         if (count != 1) {
-            return null;
+            if (count >= 2)
+                traitAmbiguousFlag = true;
+            else if (count == 0)
+                traitLackedFlag ++;
+
+            ret = null;
         }
         return ret;
     }
@@ -392,8 +501,14 @@ public class PHPInheritFactory {
             }
         }
 
-        if (count != 1)
+        if (count != 1) {
+            if (count >= 2)
+                traitAmbiguousFlag = true;
+            else if (count == 0)
+                traitLackedFlag ++;
+
             ret = null;
+        }
 
         return ret;
     }
@@ -407,8 +522,10 @@ public class PHPInheritFactory {
 
         HashSet<Long> targetIncludeFileIds = PHPIncludeMapFactory.getIncludeFilesSet(fileid);
 
-        if (targetIncludeFileIds == null || targetIncludeFileIds.size() == 1)
+        if (targetIncludeFileIds == null || targetIncludeFileIds.size() == 1) {
+            traitLackedFlag ++;
             return null;
+        }
 
         for (Long targetFileId : targetIncludeFileIds) {
             // System.out.println(fileId);
@@ -425,8 +542,14 @@ public class PHPInheritFactory {
         }
 
         // Still get ambiguous Trait
-        if (count != 1)
+        if (count != 1) {
+            if (count >= 2)
+                traitAmbiguousFlag = true;
+            else if (count == 0)
+                traitLackedFlag ++;
+
             ret = null;
+        }
 
         return ret;
     }
@@ -451,7 +574,7 @@ public class PHPInheritFactory {
      */
     public static void createTraitEdges(IG ig) {
         // Count the number when use trait happens
-        long useTraitNum = useTraits.size();
+        long useTraitNum = 0;
         // AST_CLASS(flags=CLASS_TRAIT) ASTNode
         long traitNodeNum = classDefUseTrait.size();
 
@@ -475,9 +598,14 @@ public class PHPInheritFactory {
                     else if (childNode instanceof IdentifierList) {
                         // [ IdentifierList ] ==> [ Identifier ] ==> [ StringExpression ]
                         int idfCount = childNode.getChildCount();
+
                         if (0 == idfCount)
                             throw new ArrayIndexOutOfBoundsException("Identifier Node should have at least one child");
                         for (int k = 0; k < idfCount; k++) {
+                            traitLackedFlag = 0;
+                            traitAmbiguousFlag = false;
+                            useTraitNum ++;
+
                             Identifier identifier = (Identifier) childNode.getChild(k);
                             StringExpression stringExpression = (StringExpression) identifier.getChild(0);
                             String traitName = stringExpression.getEscapedCodeStr();
@@ -501,6 +629,11 @@ public class PHPInheritFactory {
                                 System.out.println("Class : " + classCommon.getName() + " ( " + classCommon.getNamewithNS() +
                                         " ) --> Trait : " + traitName);
                             } else {
+                                if (traitLackedFlag == 3)
+                                    traitLacked ++;
+                                if (traitAmbiguousFlag == true)
+                                    traitAmbiguous ++;
+
                                 System.out.println("Cannot find definition node for Trait " + traitName);
                             }
                         }
@@ -522,6 +655,16 @@ public class PHPInheritFactory {
         System.out.println("Total " + traitNodeNum + " Node(s) in whole files.");
         System.out.println("Total " +useTraitNum + " time(s) used by classes." );
         System.out.println("Successfully connected: " + successfullyBuilt + " Edges");
+        System.out.println(traitAmbiguous + " edges are ambiguous.");
+        System.out.println(traitLacked + " edges lost due to lack of Base Definition node.");
+
+        float mappedExtendsPercent = traitNodeNum == 0 ? 100 : ((float) successfullyBuilt / (float) traitNodeNum) * 100;
+        System.out.println( "=> " + mappedExtendsPercent + " % " +
+                "of TRAIT edges could be successfully connected.");
+        float ambiguousPropotion = traitNodeNum == 0 ? 0 : ((float) traitAmbiguous / (float) traitNodeNum) * 100;
+        System.out.println("Ambiguous not handled: " + ambiguousPropotion + " %.");
+        float lackedProption = traitNodeNum == 0 ? 0 : ((float) traitLacked / (float) traitNodeNum) * 100;
+        System.out.println("Lacked Trait Definition not handled: " + lackedProption + "%.");
     }
 
 

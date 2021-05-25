@@ -10,15 +10,6 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../jpanlib/out/artifacts/jpanlib/jpanlib.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="file://$MODULE_DIR$/../../../octopus/lib" />
         </CLASSES>
         <JAVADOC />
@@ -27,6 +18,15 @@
         </SOURCES>
         <jarDirectory url="file://$MODULE_DIR$/../../../octopus/lib" recursive="false" />
         <jarDirectory url="file://$MODULE_DIR$/../../../octopus/lib" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../../jpanlib/build/libs/jpanlib.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
       </library>
     </orderEntry>
   </component>

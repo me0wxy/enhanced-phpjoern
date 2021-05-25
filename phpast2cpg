@@ -1,0 +1,5 @@
+#!/bin/bash
+
+BASEDIR=$(dirname "$0")
+
+java -Xmx120G -Xms2048m -cp "$BASEDIR/joern-php/build/libs/joern-php.jar:$BASEDIR/jpanlib/build/libs/jpanlib.jar:$BASEDIR/projects/octopus/lib/*" tools.php.ast2cpg.Main $@
