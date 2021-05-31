@@ -42,9 +42,9 @@ public class CFGEdge extends Edge<CFGNode>
 		{
 			this.properties = new HashMap<String, Object>();
 			if(label.equals(TRUE_LABEL))
-				this.properties.put("flowLabel", 1);
+				this.properties.put("flowLabel", "1");
 			else if(label.equals(FALSE_LABEL))
-				this.properties.put("flowLabel", 0);
+				this.properties.put("flowLabel", "0");
 		}
 		return this.properties;
 	}
