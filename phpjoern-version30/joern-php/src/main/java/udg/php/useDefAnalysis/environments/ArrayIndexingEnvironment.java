@@ -29,9 +29,9 @@ public class ArrayIndexingEnvironment extends UseDefEnvironment
 			// mxy: to get the name of array's index
             if(((ASTNodeASTProvider)astProvider.getChild(1)).getASTNode() instanceof StringExpression) {
                 String code = astProvider.getChild(1).getEscapedCodeStr();
-                sb.append("['");
+                sb.append("[\"");
                 sb.append(code);
-                sb.append("']");
+                sb.append("\"]");
             }
 			else if(((ASTNodeASTProvider)astProvider.getChild(1)).getASTNode() instanceof IntegerExpression) {
 				String code = astProvider.getChild(1).getEscapedCodeStr();
