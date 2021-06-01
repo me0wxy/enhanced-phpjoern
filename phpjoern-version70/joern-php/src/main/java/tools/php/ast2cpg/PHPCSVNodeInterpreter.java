@@ -671,8 +671,8 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 		String childnum = row.getFieldForKey(PHPCSVNodeTypes.CHILDNUM);
 		String namespace = row.getFieldForKey(PHPCSVNodeTypes.NAMESPACE);
 		String endlineno = row.getFieldForKey(PHPCSVNodeTypes.ENDLINENO);
-		String name = row.getFieldForKey(PHPCSVNodeTypes.NAME);
-		String doccomment = row.getFieldForKey(PHPCSVNodeTypes.DOCCOMMENT);
+		//String name = row.getFieldForKey(PHPCSVNodeTypes.NAME);
+		//String doccomment = row.getFieldForKey(PHPCSVNodeTypes.DOCCOMMENT);
 		long fileid = Long.parseLong(row.getFieldForKey(PHPCSVNodeTypes.FILEID));
 
 		newNode.setProperty(PHPCSVNodeTypes.TYPE.getName(), type);
@@ -684,8 +684,8 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 		newNode.setLocation(codeloc);
 		newNode.setProperty(PHPCSVNodeTypes.CHILDNUM.getName(), childnum);
 		newNode.setEnclosingNamespace(namespace);
-		newNode.setName(name);
-		newNode.setDocComment(doccomment);
+		//newNode.setName(name);
+		//newNode.setDocComment(doccomment);
 
 		long id = Long.parseLong(row.getFieldForKey(PHPCSVNodeTypes.NODE_ID));
 		ast.addNodeWithId(newNode, id);
