@@ -10,14 +10,14 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="file://$MODULE_DIR$/../../../../octopus/lib" />
+          <root url="file://$MODULE_DIR$/../../../octopus/lib" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../../octopus/lib" />
+          <root url="file://$MODULE_DIR$/../../../octopus/lib" />
         </SOURCES>
-        <jarDirectory url="file://$MODULE_DIR$/../../../../octopus/lib" recursive="false" />
-        <jarDirectory url="file://$MODULE_DIR$/../../../../octopus/lib" recursive="false" type="SOURCES" />
+        <jarDirectory url="file://$MODULE_DIR$/../../../octopus/lib" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/../../../octopus/lib" recursive="false" type="SOURCES" />
       </library>
     </orderEntry>
     <orderEntry type="module-library">

@@ -28,6 +28,9 @@ public class ClassDef extends ClassDefStatement
 	{
 		this.classname = classname;
 		super.addChild(classname);
+
+		setName(classname.getEscapedCodeStr());
+		setNamewithNS(getNameSpace(), classname.getEscapedCodeStr());
 	}
 
 	public StringExpression getClassDocComment()
@@ -39,6 +42,8 @@ public class ClassDef extends ClassDefStatement
 	{
 		this.classDocComment = classDocComment;
 		super.addChild(classDocComment);
+
+		setDocComment(classDocComment.getEscapedCodeStr());
 	}
 
 	public IntegerExpression getOffset()

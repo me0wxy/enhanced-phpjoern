@@ -8,6 +8,18 @@ public class ConstantElement extends Statement
 {
 	private StringExpression name = null;
 	private Expression value = null;
+	private StringExpression docComment = null;
+
+	public StringExpression getDocComment()
+	{
+		return this.docComment;
+	}
+
+	public void setDocComment(StringExpression docComment)
+	{
+		this.docComment = docComment;
+		super.addChild(docComment);
+	}
 
 	public StringExpression getNameChild()
 	{

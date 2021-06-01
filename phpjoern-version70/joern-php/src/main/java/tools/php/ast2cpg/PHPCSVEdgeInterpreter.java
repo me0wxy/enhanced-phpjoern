@@ -537,23 +537,38 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 
 		switch (childnum)
 		{
-			case 0: // params child
+			case 0: // name child: StringExpression node
+				if (endNode instanceof NullNode)
+					startNode.addChild(endNode);
+				else
+					startNode.setFunctionName((StringExpression)endNode);
+				break;
+			case 1: // docComment child: StringExpression node
+				if (endNode instanceof NullNode)
+					startNode.addChild(endNode);
+				else
+					startNode.setFunctionDocComment((StringExpression)endNode);
+				break;
+			case 2: // params child
 				startNode.setParameterList((ParameterList)endNode);
 				break;
-			case 1: // uses child: either ClosureUses or NULL node
+			case 3: // uses child: either ClosureUses or NULL node
 				if( endNode instanceof NullNode)
 					startNode.addChild(endNode);
 				else
 					startNode.setClosureUses((ClosureUses)endNode);
 				break;
-			case 2: // stmts child
+			case 4: // stmts child
 				startNode.setContent((CompoundStatement)endNode);
 				break;
-			case 3: // returnType child: either Identifier or NULL node
+			case 5: // returnType child: either Identifier or NULL node
 				if( endNode instanceof NullNode)
 					startNode.addChild(endNode);
 				else
 					startNode.setReturnType((Identifier)endNode);
+				break;
+			case 6:
+				startNode.setOffset((IntegerExpression)endNode);
 				break;
 
 			default:
@@ -571,6 +586,7 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 		{
 			case 0:
 				startNode.setFunctionName((StringExpression)endNode);
+
 				//startNode.setName(endNode.getEscapedCodeStr());
 				break;
 			case 1:
@@ -614,9 +630,10 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 			case 0: // name child: either StringExpression
 				startNode.setClassname((StringExpression)endNode);
 
-				String classname = endNode.getEscapedCodeStr();
-				startNode.setName(classname);
-				startNode.setNamewithNS(startNode.getNameSpace(), classname);
+//				String classname = endNode.getEscapedCodeStr();
+//				startNode.setName(classname);
+//				startNode.setNamewithNS(startNode.getNameSpace(), classname);
+				break;
 
 			case 1: // docComment child: either StringExpression or Null node
 				if ( endNode instanceof NullNode)
@@ -1747,6 +1764,12 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 				break;
 			case 1: // value child: Expression node
 				startNode.setValue((Expression)endNode);
+				break;
+			case 2:
+				if (endNode instanceof NullNode)
+					startNode.addChild(endNode);
+				else
+					startNode.setDocComment((StringExpression)endNode);
 				break;
 
 			default:
