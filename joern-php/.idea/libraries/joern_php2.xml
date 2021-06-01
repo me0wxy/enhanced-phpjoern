@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="joern_php">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/out/artifacts/joern_php/joern_php.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

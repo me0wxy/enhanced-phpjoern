@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="jpanlib">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/out/artifacts/jpanlib_jar/jpanlib.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
