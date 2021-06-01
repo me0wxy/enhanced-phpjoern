@@ -54,6 +54,7 @@ public class FunctionDef extends FunctionDefBase
 	public void setFunctionName(StringExpression functionName)
 	{
 		this.functionName = functionName;
+		setName(functionName.getEscapedCodeStr());
 		super.addChild(functionName);
 	}
 
@@ -65,6 +66,7 @@ public class FunctionDef extends FunctionDefBase
 	public void setFunctionDocComment(StringExpression functionDocComment)
 	{
 		this.functionDocComment = functionDocComment;
+		setDocComment(functionDocComment.getEscapedCodeStr());
 		super.addChild(functionDocComment);
 	}
 

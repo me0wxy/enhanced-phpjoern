@@ -571,8 +571,7 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 		{
 			case 0:
 				startNode.setFunctionName((StringExpression)endNode);
-
-				startNode.setName(endNode.getEscapedCodeStr());
+				//startNode.setName(endNode.getEscapedCodeStr());
 				break;
 			case 1:
 				if ( endNode instanceof NullNode)
