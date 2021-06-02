@@ -628,7 +628,10 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 		switch (childnum)
 		{
 			case 0: // name child: either StringExpression
-				startNode.setClassname((StringExpression)endNode);
+				if ( endNode instanceof NullNode)
+					startNode.addChild(endNode);
+				else
+					startNode.setClassname((StringExpression)endNode);
 
 //				String classname = endNode.getEscapedCodeStr();
 //				startNode.setName(classname);
@@ -1229,7 +1232,7 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 		switch (childnum)
 		{
 			case 0:	// type child: TypeHint node
-				startNode.setTypeHint((TypeHint)endNode);
+				startNode.setType((Identifier) endNode);
 				break;
 
 			default:
@@ -1944,8 +1947,11 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 
 		switch (childnum)
 		{
-			case 0: // typehint child: TypeHint node
-				startNode.setTypeHint((TypeHint) endNode);
+			case 0: // typehint child: TypeHint node or NULL node
+				if (endNode instanceof NullNode)
+					startNode.addChild(endNode);
+				else
+					startNode.setType((Identifier) endNode);
 				break;
 			case 1: // props child: PropertyElement node
 				startNode.setPropertyDeclaration((PropertyDeclaration) endNode);
@@ -2065,8 +2071,8 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 
 		switch (childnum)
 		{
-			case 0: // exception child: Identifier node
-				startNode.setExceptionIdentifier((Identifier)endNode);
+			case 0: // exception child: IdentifierList node
+				startNode.setExceptionIdentifierList((IdentifierList)endNode);
 				break;
 			case 1: // var child: Variable node
 				startNode.setVariable((Variable)endNode);
@@ -2216,7 +2222,10 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 
 	private int handleArray( ArrayExpression startNode, ASTNode endNode, int childnum)
 	{
-		startNode.addArrayElement((ArrayElement)endNode);
+		if (endNode instanceof NullNode)
+			startNode.addChild(endNode);
+		else
+			startNode.addArrayElement((ArrayElement)endNode);
 
 		return 0;
 	}

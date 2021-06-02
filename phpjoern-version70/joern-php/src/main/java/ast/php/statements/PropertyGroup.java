@@ -1,24 +1,25 @@
 package ast.php.statements;
 
+import ast.expressions.Identifier;
 import ast.logical.statements.Statement;
 import ast.php.expressions.TypeHint;
 
 public class PropertyGroup extends Statement
 {
     // childnum : 0
-    TypeHint typeHint = null;
+    Identifier type = null;
     // childnum : 1
     PropertyDeclaration propertyDeclaration = null;
 
-    public TypeHint getTypeHint()
+    public Identifier getType()
     {
-        return this.typeHint;
+        return this.type;
     }
 
-    public void setTypeHint(TypeHint typeHint)
+    public void setType(Identifier type)
     {
-        this.typeHint = typeHint;
-        super.addChild(typeHint);
+        this.type = type;
+        super.addChild(type);
     }
 
     public PropertyDeclaration getPropertyDeclaration()

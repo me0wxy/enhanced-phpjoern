@@ -1,19 +1,20 @@
 package ast.php.expressions;
 
+import ast.expressions.Expression;
 import ast.expressions.Identifier;
 
 public class NullableType extends Identifier
 {
-    private TypeHint typeHint = null;
+    private Identifier type = null;
 
-    public TypeHint getTypeHint()
+    public Identifier getType()
     {
-        return this.typeHint;
+        return this.type;
     }
 
-    public void setTypeHint(TypeHint typeHint)
+    public void setType(Identifier type)
     {
-        this.typeHint = typeHint;
-        super.addChild(typeHint);
+        this.type = type;
+        super.addChild(type);
     }
 }
