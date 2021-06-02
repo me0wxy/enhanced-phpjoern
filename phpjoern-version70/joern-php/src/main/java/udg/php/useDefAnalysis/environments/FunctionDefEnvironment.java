@@ -15,7 +15,7 @@ public class FunctionDefEnvironment extends UseDefEnvironment
 		// the first and second children contain the parameters, respectively
 		// the used variables (for a closure)
 		int childNum = child.getChildNumber();
-		if( 0 == childNum || 1 == childNum)
+		if( 2 == childNum || 3 == childNum)
 			this.symbols.addAll(childSymbols);
 	}
 	
@@ -33,6 +33,6 @@ public class FunctionDefEnvironment extends UseDefEnvironment
 	public boolean shouldTraverse(ASTProvider child)
 	{
 		int childNum = child.getChildNumber();
-		return 0 == childNum || 1 == childNum ? true : false;
+		return 2 == childNum || 3 == childNum ? true : false;
 	}
 }
