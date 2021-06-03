@@ -520,9 +520,6 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 				else
 					startNode.setReturnType((Identifier)endNode);
 				break;
-			case 5: // integer child: IntegerExpression node
-				startNode.setOffset((IntegerExpression)endNode);
-				break;
 
 			default:
 				errno = 1;
@@ -567,9 +564,6 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 				else
 					startNode.setReturnType((Identifier)endNode);
 				break;
-			case 6:
-				startNode.setOffset((IntegerExpression)endNode);
-				break;
 
 			default:
 				errno = 1;
@@ -609,9 +603,6 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 					startNode.addChild(endNode);
 				else
 					startNode.setReturnType((Identifier)endNode);
-				break;
-			case 5: // IntegerExpression child
-				startNode.setOffset((IntegerExpression)endNode);
 				break;
 
 			default:
@@ -659,9 +650,6 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 			case 4: // toplevel child
 				startNode.setTopLevelFunc((TopLevelFunctionDef)endNode);
 				break;
-			case 5: // integer child: either IntegerExpression or NULL node
-				startNode.setOffset((IntegerExpression)endNode);
-				break;
 
 			default:
 				errno = 1;
@@ -700,9 +688,6 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 					startNode.addChild(endNode);
 				else
 					startNode.setReturnType((Identifier)endNode);
-				break;
-			case 5: // IntegerExpression child
-				startNode.setOffset((IntegerExpression)endNode);
 				break;
 
 			default:

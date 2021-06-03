@@ -338,14 +338,17 @@ public class PHPCGFactory {
 												//e.printStackTrace();
 											}
 										}
-										// $a = func() check TypeHint
+										// $a = func(), check ReturnType and TypeHint
 										else if(expr instanceof AssignmentExpression && ((AssignmentExpression)expr).getRight() instanceof CallExpressionBase){
 											CGNode cgNode = new CGNode((CallExpressionBase) (((AssignmentExpression)expr).getRight()));
 											if(!cg.contains(cgNode)) continue;
 											for(CGEdge cgEdge: cg.outgoingEdges(cgNode)) {
 												try {
 													FunctionDef funcDef = (FunctionDef) (cgEdge.getDestination().getASTNode());
-													if(funcDef.getDocComment() != null){
+													if(funcDef.getReturnType() != null){
+														enclosingClass = funcDef.getReturnType().getNameChild().getEscapedCodeStr();
+													}
+													else if(funcDef.getDocComment() != null){
 														Pattern r = Pattern.compile("@return\\s+([A-Za-z0-9_|]+)\\s+");
 														Matcher m = r.matcher(funcDef.getDocComment());
 														while(m.find()){
