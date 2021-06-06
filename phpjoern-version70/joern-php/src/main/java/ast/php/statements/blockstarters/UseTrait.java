@@ -9,6 +9,17 @@ public class UseTrait extends BlockStarter
 	private IdentifierList traits = null;
 	private TraitAdaptations traitAdaptations = null;
 	private String NamewithNS = "";
+	private long classid = -1;
+
+	public long getClassid()
+	{
+		return this.classid;
+	}
+
+	public void setClassid(long classid)
+	{
+		this.classid = classid;
+	}
 
 	public IdentifierList getTraits()
 	{

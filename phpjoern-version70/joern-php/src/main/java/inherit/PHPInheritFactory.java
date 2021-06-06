@@ -12,6 +12,7 @@ import ast.php.statements.blockstarters.UseTrait;
 import ast.statements.UseElement;
 import filesystem.PHPIncludeMapFactory;
 import inputModules.csv.PHPCSVNodeTypes;
+import misc.HashMapOfSets;
 import misc.MultiHashMap;
 import org.apache.commons.lang3.ObjectUtils;
 import outputModules.common.Writer;
@@ -31,6 +32,9 @@ public class PHPInheritFactory {
 
     // gather all AST_USE_TRAIT ASTNode
     private static LinkedList<UseTrait> useTraits = new LinkedList<>();
+
+    // Map classname and classid
+    private static HashMap<Long, ClassDef> classIdNameMap = new HashMap<>();
 
     // for MXY
     private static MultiHashMap<String, String> ClassHierarchyMap = new MultiHashMap<String, String>();
@@ -69,6 +73,11 @@ public class PHPInheritFactory {
         return ClassHierarchyMap.get(className);
     }
 
+
+    public static void addClassIdNameMap(long classid, ClassDef classDef)
+    {
+        classIdNameMap.put(classid, classDef);
+    }
 
     /**
      * Add Unique(without ambiguous classname after namespace added) ClassDef ASTNode to LinkedList<ClassDef>
@@ -554,16 +563,25 @@ public class PHPInheritFactory {
         return ret;
     }
 
-    public static ClassDef getClassDef(String className) {
+//    public static ClassDef getClassDef(String className) {
+//
+//        ClassDef ret = null;
+//
+//        for (ClassDef classDef: classDefs) {
+//            String name = classDef.getNamewithNS();
+//            if (name.equals(className)) {
+//                return classDef;
+//            }
+//        }
+//
+//        return ret;
+//    }
 
+    public static ClassDef getClassDef(long classid)
+    {
         ClassDef ret = null;
 
-        for (ClassDef classDef: classDefs) {
-            String name = classDef.getNamewithNS();
-            if (name.equals(className)) {
-                return classDef;
-            }
-        }
+        ret =  classIdNameMap.get(classid);
 
         return ret;
     }
@@ -584,9 +602,10 @@ public class PHPInheritFactory {
             for (UseTrait useTrait: useTraits) {
                 //System.out.println("Now we are visiting CLASS_TRAIT Node : " + useTrait.getEnclosingClass() + " ( " + useTrait.getNamewithNS() + " )");
                 String className = useTrait.getNamewithNS();
+                long classid = useTrait.getClassid();
                 // Class which uses Trait
-                ClassDef classCommon = getClassDef(className);
-                Long fileid = classCommon.getFileId();
+                ClassDef classCommon = getClassDef(classid);
+                 Long fileid = classCommon.getFileId();
 
                 int childCount = useTrait.getChildCount();
 

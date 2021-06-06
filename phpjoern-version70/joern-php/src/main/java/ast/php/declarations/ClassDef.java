@@ -18,6 +18,17 @@ public class ClassDef extends ClassDefStatement
 	private StringExpression classDocComment = null;
 	private IntegerExpression offset = null;
 	private String NamewithNS = null;
+	private long classid = -1;
+
+	public long getClassid()
+	{
+		return this.classid;
+	}
+
+	public void setClassid(long classid)
+	{
+		this.classid = classid;
+	}
 
 	public StringExpression getClassname()
 	{

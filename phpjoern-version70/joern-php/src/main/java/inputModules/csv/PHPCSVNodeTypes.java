@@ -29,6 +29,7 @@ public class PHPCSVNodeTypes
 	public static final CSVKey CLASSNAME = new CSVKey("classname");
 	public static final CSVKey NAMESPACE = new CSVKey("namespace");
 	public static final CSVKey FILEID = new CSVKey("fileid", "int");
+	public static final CSVKey CLASSID = new CSVKey("classid", "int");
 
 	
 	/* node labels */
