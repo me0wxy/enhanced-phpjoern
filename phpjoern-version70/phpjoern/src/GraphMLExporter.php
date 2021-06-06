@@ -83,7 +83,7 @@ class GraphMLExporter extends Exporter {
    * Exporter class to export a node to a CSV file and increase the node
    * counter.
    */
-  protected function store_node( $label, $type, $flags, $lineno, $code = null, $childnum = null, $funcid = null, $classname = null, $namespace = null, $endlineno = null, $name = null, $doccomment = null, $fileid = null) : int {
+  protected function store_node( $label, $type, $flags, $lineno, $code = null, $childnum = null, $funcid = null, $classname = null, $namespace = null, $endlineno = null, $name = null, $doccomment = null, $fileid = null, $classid = null) : int {
 
     fwrite( $this->handle, '    <node id="'.$this->nodecount.'">'."\n");
     if( !($type === null || $type === "")) fwrite( $this->handle, '      <data key="label">'.$label.'</data>'."\n");
@@ -98,7 +98,9 @@ class GraphMLExporter extends Exporter {
     if( !($endlineno === null || $endlineno === "")) fwrite( $this->handle, '      <data key="endlineno">'.$endlineno.'</data>'."\n");
     if( !($name === null || $name === "")) fwrite( $this->handle, '      <data key="name">'.$name.'</data>'."\n");
     if( !($doccomment === null || $doccomment === "")) fwrite( $this->handle, '      <data key="doccomment">'.$doccomment.'</data>'."\n");
-    fwrite( $this->handle, '    </node>'."\n");
+      if( !($fileid === null || $fileid === "")) fwrite( $this->handle, '      <data key="fileid">'.$fileid.'</data>'."\n");
+      if( !($classid === null || $classid === "")) fwrite( $this->handle, '      <data key="classid">'.$classid.'</data>'."\n");
+      fwrite( $this->handle, '    </node>'."\n");
 
     // return the current node index, *then* increment it
     return $this->nodecount++;

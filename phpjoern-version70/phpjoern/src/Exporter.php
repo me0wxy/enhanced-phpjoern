@@ -43,6 +43,8 @@ abstract class Exporter {
   const FUNC_ENTRY = "CFG_FUNC_ENTRY";
   const FUNC_EXIT = "CFG_FUNC_EXIT";
 
+  private $flag_classid = null;
+
   /** Delimiter for arrays, used by format_flags() */
   protected $array_delim = ";";
 
@@ -119,9 +121,15 @@ abstract class Exporter {
       if( isset( $ast->docComment)) {
         $nodedoccomment = $this->quote_and_escape( $ast->docComment);
       }
+
+        // If this node is a class declaration, set $classname
+        if( $ast->kind === ast\AST_CLASS) {
+            $classname = $nodename;
+            $this->flag_classid = $this->nodecount;
+        }
       
       // store node, export all children and store the relationships
-      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, $nodeflags, $nodeline, null, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), $nodeendline, $nodename, $nodedoccomment, $this->getFileId());
+      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, $nodeflags, $nodeline, null, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), $nodeendline, $nodename, $nodedoccomment, $this->getFileId(), $this->flag_classid);
 
       // If this node is a function/method/closure declaration, set $funcid.
       // Note that in particular, the decl node *itself* does not have $funcid set to its own id;
@@ -140,15 +148,10 @@ abstract class Exporter {
       // (2) the name (to that of the function)
       if( $ast->kind === ast\AST_FUNC_DECL || $ast->kind === ast\AST_METHOD || $ast->kind === ast\AST_CLOSURE) {
         $funcid = $rootnode;
-        $entrynode = $this->store_node( self::LABEL_ART, self::FUNC_ENTRY, null, null, null, null, $rootnode, $classname, $this->quote_and_escape( $namespace), null, $this->quote_and_escape( $nodename), null, $this->getFileId());
-        $exitnode = $this->store_node( self::LABEL_ART, self::FUNC_EXIT, null, null, null, null, $rootnode, $classname, $this->quote_and_escape( $namespace), null, $this->quote_and_escape( $nodename), null, $this->getFileId());
+        $entrynode = $this->store_node( self::LABEL_ART, self::FUNC_ENTRY, null, null, null, null, $rootnode, $classname, $this->quote_and_escape( $namespace), null, $this->quote_and_escape( $nodename), null, $this->getFileId(), $this->flag_classid);
+        $exitnode = $this->store_node( self::LABEL_ART, self::FUNC_EXIT, null, null, null, null, $rootnode, $classname, $this->quote_and_escape( $namespace), null, $this->quote_and_escape( $nodename), null, $this->getFileId(), $this->flag_classid);
         $this->store_rel( $rootnode, $entrynode, "ENTRY");
         $this->store_rel( $rootnode, $exitnode, "EXIT");
-      }
-
-      // If this node is a class declaration, set $classname
-      if( $ast->kind === ast\AST_CLASS) {
-        $classname = $nodename;
       }
 
       // iterate over the children and count them
@@ -203,6 +206,10 @@ abstract class Exporter {
         // next child...
         $i++;
       }
+
+        if( $ast->kind === ast\AST_CLASS) {
+            $this->flag_classid = null;
+        }
     }
 
     // if $ast is not an AST node, it should be a plain value
@@ -213,7 +220,7 @@ abstract class Exporter {
     else if( is_string( $ast)) {
 
       $nodetype = gettype( $ast); // should be string
-      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, $this->quote_and_escape( $ast), $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), null, null, null, $this->getFileId());
+      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, $this->quote_and_escape( $ast), $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), null, null, null, $this->getFileId(), $this->flag_classid);
     }
 
     // (3) If it a plain value and more precisely null, there's no corresponding code per se, so we just print the type.
@@ -225,7 +232,7 @@ abstract class Exporter {
     else if( $ast === null) {
 
       $nodetype = gettype( $ast); // should be the string "NULL"
-      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, null, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace),null,null,null,$this->getFileId());
+      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, null, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace),null,null,null,$this->getFileId(), $this->flag_classid);
     }
 
     // (4) if it is a plain value but not a string and not null, cast to string and store the result as $nodecode
@@ -242,7 +249,7 @@ abstract class Exporter {
 
       $nodetype = gettype( $ast);
       $nodecode = (string) $ast;
-      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, $nodecode, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), null,null,null, $this->getFileId());
+      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, $nodecode, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), null,null,null, $this->getFileId(), $this->flag_classid);
     }
 
     return $rootnode;
@@ -338,7 +345,7 @@ abstract class Exporter {
    *
    * @return The index of the stored node.
    */
-  abstract protected function store_node( $label, $type, $flags, $lineno, $code = null, $childnum = null, $funcid = null, $classname = null, $namespace = null, $endlineno = null, $name = null, $doccomment = null, $fileid = null) : int;
+  abstract protected function store_node( $label, $type, $flags, $lineno, $code = null, $childnum = null, $funcid = null, $classname = null, $namespace = null, $endlineno = null, $name = null, $doccomment = null, $fileid = null, $classid = null) : int;
 
   /*
    * (Abstract) helper function to writes a relationship to a file.
