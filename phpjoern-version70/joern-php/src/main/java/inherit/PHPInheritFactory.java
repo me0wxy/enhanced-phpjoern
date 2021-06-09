@@ -2,24 +2,17 @@ package inherit;
 
 import ast.ASTNode;
 import ast.NullNode;
-import ast.declarations.ClassDefStatement;
 import ast.expressions.Identifier;
 import ast.expressions.IdentifierList;
 import ast.expressions.StringExpression;
 import ast.php.declarations.ClassDef;
 import ast.php.statements.blockstarters.TraitAdaptations;
 import ast.php.statements.blockstarters.UseTrait;
-import ast.statements.UseElement;
 import filesystem.PHPIncludeMapFactory;
-import inputModules.csv.PHPCSVNodeTypes;
-import misc.HashMapOfSets;
 import misc.MultiHashMap;
-import org.apache.commons.lang3.ObjectUtils;
 import outputModules.common.Writer;
+import tools.php.ast2cpg.CommandLineInterface;
 
-import javax.jws.soap.SOAPBinding;
-import javax.management.loading.MLet;
-import javax.xml.soap.Name;
 import java.util.*;
 
 public class PHPInheritFactory {
@@ -54,16 +47,33 @@ public class PHPInheritFactory {
     private static Boolean traitAmbiguousFlag = false;
 
     private static long baseCycled = 0;
-    private static LinkedList<ClassDef> baseCycledList = new LinkedList<ClassDef>();
+    private static LinkedList<ClassDef> baseCycledList = new LinkedList<>();
+
+    // gather all ambiguous AST_CLASS related with EXTENDS Edges
+    private static HashMap<ClassDef, String> ambiguousClassExtendsNodes = new HashMap<>();
+
+    // gather all ambiguous AST_CLASS related with IMPLEMENTS Edges
+    private static HashMap<ClassDef, String> ambiguousClassImplementsNodes = new HashMap<>();
+
+    // gather all ambiguous AST_CLASS related with TRAIT Edges
+    private static HashMap<String, ClassDef> ambiguousTraitNodes = new HashMap<>();
 
     // create an Inherit Graph
     public static IG newInstance() {
         IG ig = new IG();
 
+        // Connect Edges by parseMode
+        // String parseMode = CommandLineInterface.getParseMode();
+
         createInheritEdges(ig);
         createTraitEdges(ig);
 
-        // createInheritEdgesByInclude(ig);
+//        if ("relax".equals(parseMode))
+//        {
+            // TODO...
+            // createInheritAmbiguousEdges(ig);
+            // createInheritAmbiguousTraitEdges(ig);
+//        }
 
         return ig;
     }
@@ -252,8 +262,8 @@ public class PHPInheritFactory {
     /**
      * Adds a Trait edge to a give IG
      * @param ig
-     * @param srcClassDef
-     * @param destClassDef
+     * @param srcClassDef AST_CLASS nodes which uses the Trait
+     * @param destClassDef Trait
      * @return true if an edge is added, false otherwise
      */
     private static boolean addInheritTraitEdges(IG ig, ClassDef srcClassDef, ClassDef destClassDef) {
@@ -287,7 +297,7 @@ public class PHPInheritFactory {
             for (ClassDef classdef : classDefs) {
 
                 String fullClassName = classdef.getNamewithNS();
-                //System.out.println("Now we are visiting the AST_CLASS ASTNode : " + classdef.getName() + " ( " + fullClassName + " )");
+                System.out.println("Now we are visiting the AST_CLASS ASTNode : " + classdef.getName() + " ( " + fullClassName + " )");
 
                 int childCount = classdef.getChildCount();
                 Long fileid = classdef.getFileId();
@@ -350,13 +360,15 @@ public class PHPInheritFactory {
 
                             // ClassHierarchyMap.add(subClass.getNamewithNS(), superClass.getNamewithNS());
 
-                            //System.out.println("Child Class : " + subClass.getName() + "( " + subClass.getNamewithNS() +
-                            //        " ) ==> Base Class : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
+                            System.out.println("Child Class : " + subClass.getName() + "( " + subClass.getNamewithNS() +
+                                    " ) ==> Base Class : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
                         } else {
                             if (baseLackedFlag == 3)
                                 baseLacked ++;
-                            if (baseAmbiguousFlag == true)
-                                baseAmbiguous ++;
+                            if (baseAmbiguousFlag) {
+                                ambiguousClassExtendsNodes.put(classdef, code);
+                                baseAmbiguous++;
+                            }
 
                             System.out.println("Cannot find Base Class for " + classdef.getName() +
                                     " ( " + classdef.getNamewithNS() + " )");
@@ -417,13 +429,15 @@ public class PHPInheritFactory {
 
                                 ClassHierarchyMap.add(subClass.getNamewithNS(), superClass.getNamewithNS());
 
-                                //System.out.println("Child Interface : " + subClass.getName() + "( " + subClass.getNamewithNS() +
-                                //        " ) ==> Base Interface : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
+                                System.out.println("Child Interface : " + subClass.getName() + "( " + subClass.getNamewithNS() +
+                                        " ) ==> Base Interface : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
                             } else {
                                 if (baseLackedFlag == 3)
                                     baseLacked ++;
-                                if (baseAmbiguousFlag == true)
-                                    baseAmbiguous ++;
+                                if (baseAmbiguousFlag) {
+                                    ambiguousClassImplementsNodes.put(classdef, code);
+                                    baseAmbiguous++;
+                                }
 
                                 System.out.println("Cannot find Base Interface for " + classdef.getName() +
                                         " ( " + classdef.getNamewithNS() + " )");
@@ -531,7 +545,7 @@ public class PHPInheritFactory {
 
         HashSet<Long> targetIncludeFileIds = PHPIncludeMapFactory.getIncludeFilesSet(fileid);
 
-        if (targetIncludeFileIds == null || targetIncludeFileIds.size() == 1) {
+        if (targetIncludeFileIds.size() == 1) {
             traitLackedFlag ++;
             return null;
         }
@@ -540,7 +554,7 @@ public class PHPInheritFactory {
             // System.out.println(fileId);
             for (ClassDef classTrait : classDefUseTrait) {
                 Long classTraitFileId = classTrait.getFileId();
-                if (classTraitFileId.equals(targetFileId) == false)
+                if (!classTraitFileId.equals(targetFileId))
                     continue;
                 String fullName = classTrait.getNamewithNS();
                 if (code.equals(fullName)) {
@@ -600,8 +614,9 @@ public class PHPInheritFactory {
 
         try {
             for (UseTrait useTrait: useTraits) {
-                //System.out.println("Now we are visiting CLASS_TRAIT Node : " + useTrait.getEnclosingClass() + " ( " + useTrait.getNamewithNS() + " )");
-                String className = useTrait.getNamewithNS();
+                // System.out.println("Now visiting CLASS_TRAIT Node : " + useTrait.getEnclosingClass() + " ( " + useTrait.getNamewithNS() + " )");
+                // String className = useTrait.getNamewithNS();
+
                 long classid = useTrait.getClassid();
                 // Class which uses Trait
                 ClassDef classCommon = getClassDef(classid);
@@ -643,21 +658,22 @@ public class PHPInheritFactory {
                                 addInheritTraitEdges(ig, classCommon, classTrait);
                                 successfullyBuilt ++;
 
-                                // ClassHierarchyMap.add(classCommon.getNamewithNS(), classTrait.getNamewithNS());
 
-                                //System.out.println("Class : " + classCommon.getName() + " ( " + classCommon.getNamewithNS() +
-                                 //       " ) --> Trait : " + traitName);
+                                System.out.println("Class : " + classCommon.getName() + " ( " + classCommon.getNamewithNS() +
+                                        " ) --> Trait : " + traitName);
                             } else {
                                 if (traitLackedFlag == 3)
                                     traitLacked ++;
-                                if (traitAmbiguousFlag == true)
-                                    traitAmbiguous ++;
+                                if (traitAmbiguousFlag) {
+                                    ambiguousTraitNodes.put(traitName, classCommon);
+                                    traitAmbiguous++;
+                                }
 
                                 System.out.println("Cannot find definition node for Trait " + traitName);
                             }
                         }
                     } else if (childNode instanceof NullNode) {
-                        continue;
+
                     } else {
                         throw new IllegalArgumentException("Wrong Type! ASTNode UseTrait's children type should be IdentifierList.");
                     }
@@ -708,5 +724,202 @@ public class PHPInheritFactory {
                 // System.out.print("InheritExntendsEdges");
             }
         }
+    }
+
+
+    public static long connectEdgeInSameNameSpace(IG ig, String code, ClassDef childClass, String edgeType)
+    {
+        long successfullyBuilt = 0;
+
+        String namespace = childClass.getNameSpace();
+        String fullName = namespace + "\\" + code;
+
+        for (ClassDef classDefItem : classDefs)
+        {
+            String nameWithNS = classDefItem.getNamewithNS();
+            if (nameWithNS.contains(code) && fullName.equals(nameWithNS))
+            {
+                if (edgeType.equals("EXTENDS")) {
+                    addInheritExtendsEdge(ig, childClass, classDefItem);
+                    successfullyBuilt ++;
+                }
+                else if (edgeType.equals("IMPLEMENTS")){
+                    addInheritImplementsEdges(ig, childClass, classDefItem);
+                    successfullyBuilt ++;
+                }
+            }
+        }
+
+        return successfullyBuilt;
+    }
+
+    public static long connectEdgeByNameSpace(IG ig, String code, ClassDef childClass, String edgeType)
+    {
+        long successfullyBuilt = 0;
+
+        for (ClassDef classDefItem : classDefs)
+        {
+            String nameWithNS = classDefItem.getNamewithNS();
+
+            if (code.equals(nameWithNS))
+            {
+                if (edgeType.equals("EXTENDS"))
+                {
+                    addInheritExtendsEdge(ig, childClass, classDefItem);
+                    successfullyBuilt ++;
+                }
+                else if (edgeType.equals("IMPLEMENTS"))
+                {
+                    addInheritImplementsEdges(ig, childClass, classDefItem);
+                    successfullyBuilt ++;
+                }
+            }
+        }
+
+        return successfullyBuilt;
+    }
+
+    public static long connectEdgeByInclude(IG ig, String code, ClassDef childClass, String edgeType)
+    {
+        long successfullyBuilt = 0;
+
+        Long childFileId = childClass.getFileId();
+
+        HashSet<Long> targetIncludeFiles = PHPIncludeMapFactory.getIncludeFilesSet(childFileId);
+
+        // No include graph for childFileid, return null
+        if (targetIncludeFiles == null || targetIncludeFiles.size() == 1)
+            return 0;
+
+        for (Long targetFileId : targetIncludeFiles)
+        {
+            for (ClassDef classDef : classDefs)
+            {
+                Long candidateFileId = classDef.getFileId();
+                if (candidateFileId.equals(targetFileId) == false)
+                    continue;
+                String nameWithNS = classDef.getNamewithNS();
+                if (code.equals(nameWithNS))
+                {
+                    if (edgeType.equals("EXTENDS"))
+                        addInheritExtendsEdge(ig, childClass, classDef);
+                    else if (edgeType.equals("IMPLEMENTS"))
+                        addInheritImplementsEdges(ig, childClass, classDef);
+                }
+            }
+        }
+
+        return successfullyBuilt;
+    }
+
+
+    public static void createInheritAmbiguousEdges(IG ig)
+    {
+        long connectedEdges = 0;
+
+        for (ClassDef ambiguousClass : ambiguousClassExtendsNodes.keySet())
+        {
+            String code = ambiguousClassExtendsNodes.get(ambiguousClass);
+            connectedEdges += connectEdgeInSameNameSpace(ig, code, ambiguousClass, "EXTENDS");
+
+            connectedEdges += connectEdgeByNameSpace(ig, code, ambiguousClass, "EXTENDS");
+
+            connectedEdges += connectEdgeByInclude(ig, code, ambiguousClass, "EXTENDS");
+        }
+
+        for (ClassDef ambiguousClass : ambiguousClassImplementsNodes.keySet())
+        {
+            String code = ambiguousClassImplementsNodes.get(ambiguousClass);
+            connectedEdges += connectEdgeInSameNameSpace(ig, code, ambiguousClass, "IMPLEMENTS");
+
+            connectedEdges += connectEdgeByNameSpace(ig, code, ambiguousClass, "IMPLEMENTS");
+
+            connectedEdges += connectEdgeByInclude(ig, code, ambiguousClass, "IMPLEMENTS");
+        }
+
+        System.out.println("Successfully connected " + connectedEdges + " ambiguous Extends/Implements Edges.");
+    }
+
+
+    public static long connectTraitEdgeInSameNameSpace(IG ig, String traitName, ClassDef useClass)
+    {
+        long successfullyBuilt = 0;
+
+        String namespace = useClass.getNameSpace();
+        String fullName = namespace + "\\" + traitName;
+
+        for (ClassDef classDefTrait : classDefUseTrait)
+        {
+            String nameWithNS = classDefTrait.getNamewithNS();
+            if (nameWithNS.contains(traitName) && fullName.equals(nameWithNS))
+            {
+                addInheritTraitEdges(ig, useClass, classDefTrait);
+                successfullyBuilt ++;
+            }
+        }
+
+        return successfullyBuilt;
+    }
+
+    public static long connectTraitEdgeByNameSpace(IG ig, String traitName, ClassDef useClass)
+    {
+        long successfullyBuilt = 0;
+
+        for (ClassDef classDefTrait : classDefUseTrait)
+        {
+            String name = classDefTrait.getNamewithNS();
+            if (name.equals(traitName))
+            {
+                addInheritTraitEdges(ig, useClass, classDefTrait);
+                successfullyBuilt ++;
+            }
+        }
+
+        return successfullyBuilt;
+    }
+
+    public static long connectTraitEdgeByInclude(IG ig, String traitName, ClassDef useClass)
+    {
+        long successfullyBuilt = 0;
+
+        Long fileid = useClass.getFileId();
+
+        HashSet<Long> targetIncludeFiles = PHPIncludeMapFactory.getIncludeFilesSet(fileid);
+
+        for (Long targetFileId : targetIncludeFiles)
+        {
+            for (ClassDef classTrait : classDefUseTrait)
+            {
+                Long classTraitFileId = classTrait.getFileId();
+                if (classTraitFileId.equals(targetFileId) == false)
+                    continue;
+                String fullName = classTrait.getNamewithNS();
+                if (traitName.equals(fullName))
+                {
+                    addInheritTraitEdges(ig, useClass, classTrait);
+                    successfullyBuilt ++;
+                }
+            }
+        }
+
+
+        return successfullyBuilt;
+    }
+
+    public static void createInheritAmbiguousTraitEdges(IG ig)
+    {
+        long connectedEdges = 0;
+
+        for (String traitName : ambiguousTraitNodes.keySet())
+        {
+            ClassDef useClass = ambiguousTraitNodes.get(traitName);
+            connectedEdges += connectTraitEdgeInSameNameSpace(ig, traitName, useClass);
+
+            connectedEdges += connectTraitEdgeByNameSpace(ig, traitName, useClass);
+
+            connectedEdges += connectTraitEdgeByInclude(ig, traitName, useClass);
+        }
+
+        System.out.println("Successfully connected " + connectedEdges + " ambiguous Trait Edges.");
     }
 }
