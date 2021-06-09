@@ -3,6 +3,7 @@ package tools.php.ast2cpg;
 import java.io.FileReader;
 import java.io.IOException;
 
+import ast.expressions.Expression;
 import ast.php.statements.GlobalStatement;
 import cfg.nodes.ASTNodeContainer;
 import cfg.nodes.CFGNode;

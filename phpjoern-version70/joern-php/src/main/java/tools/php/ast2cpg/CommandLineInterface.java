@@ -8,6 +8,7 @@ public class CommandLineInterface extends CommonCommandLineInterface
 {
 	String nodeFile;
 	String edgeFile;
+	static String mode;
 
 	public String getNodeFile()
 	{
@@ -21,12 +22,12 @@ public class CommandLineInterface extends CommonCommandLineInterface
 
 	public void printHelp()
 	{
-		formatter.printHelp("importer <nodes.csv> <edges.csv> ...", options);
+		formatter.printHelp("importer <nodes.csv> <edges.csv> [relax | strict(default)]...", options);
 	}
 
 	public void parseCommandLine(String[] args) throws ParseException
 	{
-		if (args.length != 2)
+		if (args.length < 2 || args.length > 3)
 			throw new RuntimeException("Please supply a node and an edge file");
 
 		cmd = parser.parse(options, args);
@@ -34,6 +35,22 @@ public class CommandLineInterface extends CommonCommandLineInterface
 		String[] arguments = cmd.getArgs();
 		nodeFile = arguments[0];
 		edgeFile = arguments[1];
+
+		if (args.length == 2)
+			mode = "strict";
+		else{
+			mode = arguments[2];
+			if (!"relax".equals(mode) && !"strict".equals(mode))
+			{
+				throw new ParseException("Please choose one mode: strict(by default) or relax");
+			}
+		}
+
+	}
+
+	public static String getParseMode()
+	{
+		return mode.replace("-", "");
 	}
 
 }

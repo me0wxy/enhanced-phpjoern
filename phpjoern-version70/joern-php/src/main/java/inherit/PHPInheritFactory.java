@@ -63,17 +63,23 @@ public class PHPInheritFactory {
         IG ig = new IG();
 
         // Connect Edges by parseMode
-        // String parseMode = CommandLineInterface.getParseMode();
+        String parseMode = CommandLineInterface.getParseMode();
 
         createInheritEdges(ig);
+
+        if ("relax".equals(parseMode))
+        {
+             // Create Ambiguous Edges
+             createInheritAmbiguousEdges(ig);
+        }
+
         createTraitEdges(ig);
 
-//        if ("relax".equals(parseMode))
-//        {
-            // TODO...
-            // createInheritAmbiguousEdges(ig);
-            // createInheritAmbiguousTraitEdges(ig);
-//        }
+        if ("relax".equals(parseMode))
+        {
+            // Create Ambiguous Trait Edges
+            createInheritAmbiguousTraitEdges(ig);
+        }
 
         return ig;
     }
@@ -727,6 +733,14 @@ public class PHPInheritFactory {
     }
 
 
+    /**
+     * Connect EXTENDS or IMPLEMENTS edges in same namespace
+     * @param ig
+     * @param code Base Class's classname (without namespace)
+     * @param childClass
+     * @param edgeType
+     * @return
+     */
     public static long connectEdgeInSameNameSpace(IG ig, String code, ClassDef childClass, String edgeType)
     {
         long successfullyBuilt = 0;
@@ -753,6 +767,14 @@ public class PHPInheritFactory {
         return successfullyBuilt;
     }
 
+    /**
+     * Connect EXTENDS or IMPLEMENTS edges in different namespace
+     * @param ig
+     * @param code  Base Class's name (with namespace)
+     * @param childClass
+     * @param edgeType
+     * @return
+     */
     public static long connectEdgeByNameSpace(IG ig, String code, ClassDef childClass, String edgeType)
     {
         long successfullyBuilt = 0;
@@ -779,6 +801,15 @@ public class PHPInheritFactory {
         return successfullyBuilt;
     }
 
+
+    /**
+     * Connect EXTENDS or IMPLEMENTS edges by Include Map
+     * @param ig
+     * @param code Base Class's classname
+     * @param childClass
+     * @param edgeType edge types, EXTENDS or IMPLEMENTS
+     * @return
+     */
     public static long connectEdgeByInclude(IG ig, String code, ClassDef childClass, String edgeType)
     {
         long successfullyBuilt = 0;
@@ -813,6 +844,10 @@ public class PHPInheritFactory {
     }
 
 
+    /**
+     * Create EXTENDS or IMPLEMENTS edges for ambiguous Base Classes
+     * @param ig
+     */
     public static void createInheritAmbiguousEdges(IG ig)
     {
         long connectedEdges = 0;
@@ -841,6 +876,13 @@ public class PHPInheritFactory {
     }
 
 
+    /**
+     * Connect Trait Edges in same namespace
+     * @param ig
+     * @param traitName
+     * @param useClass Class(type=AST_CLASS) node which use the Trait
+     * @return successfully connected edges number
+     */
     public static long connectTraitEdgeInSameNameSpace(IG ig, String traitName, ClassDef useClass)
     {
         long successfullyBuilt = 0;
@@ -861,6 +903,13 @@ public class PHPInheritFactory {
         return successfullyBuilt;
     }
 
+    /**
+     * Connect Trait Edges In different namespace
+     * @param ig
+     * @param traitName
+     * @param useClass Class(type=AST_CLASS) node which use the Trait
+     * @return successfully connected edges number
+     */
     public static long connectTraitEdgeByNameSpace(IG ig, String traitName, ClassDef useClass)
     {
         long successfullyBuilt = 0;
@@ -878,6 +927,13 @@ public class PHPInheritFactory {
         return successfullyBuilt;
     }
 
+    /**
+     * Connect Trait Edges through Include Map
+     * @param ig
+     * @param traitName
+     * @param useClass Class(type=AST_CLASS) node which use the Trait
+     * @return successfully connected edges number
+     */
     public static long connectTraitEdgeByInclude(IG ig, String traitName, ClassDef useClass)
     {
         long successfullyBuilt = 0;
@@ -906,6 +962,11 @@ public class PHPInheritFactory {
         return successfullyBuilt;
     }
 
+    /**
+     * create TRAIT edges for ambiguous trait nodes(type=AST_CLASS, flags=CLASS_TRAIT)
+     * when we come across a trait name(String), it may has ambiguous TRAIT definitions.
+     * @param ig
+     */
     public static void createInheritAmbiguousTraitEdges(IG ig)
     {
         long connectedEdges = 0;
