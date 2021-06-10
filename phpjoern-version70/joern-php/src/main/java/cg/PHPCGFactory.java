@@ -5,6 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ast.expressions.*;
+import ast.php.declarations.ClassDef;
 import ast.php.expressions.MethodCallExpression;
 import ast.php.expressions.StaticCallExpression;
 import ast.php.functionDef.Closure;
@@ -54,6 +55,9 @@ public class PHPCGFactory {
 	private static LinkedList<MethodCallExpression> nonStaticMethodCalls = new LinkedList<MethodCallExpression>();
 
 
+	// mxy: for ast.so 70, there is no property "classname" in ast node, so delay these methodDef's handle
+	private static LinkedList<Method> delayMethods = new LinkedList<>();
+
 	// mxy: positive or negative parse mode
 	private static boolean mode = true;
 	// mxy: numbers to evaluate multiple func optimize
@@ -88,6 +92,8 @@ public class PHPCGFactory {
 			globalMap.add(globalStatement.getVariable().getNameExpression().getEscapedCodeStr(), globalStatement);
 		}
 		globalStatements.clear();
+
+		dealClassRelatedDef();
 
 		createFunctionCallEdges(cg);
 		createStaticMethodCallEdges(cg);
@@ -281,9 +287,10 @@ public class PHPCGFactory {
 							&& ((StringExpression)((Variable)methodCall.getTargetObject()).getNameExpression())
 								.getEscapedCodeStr().equals("this")) {
 							
-							String enclosingClass = methodCall.getEnclosingClass();
+							//String enclosingClass = methodCall.getEnclosingClass();
+							String enclosingClass = PHPInheritFactory.getClassDef(methodCall.getClassid()).getName();
 							for( Method methodDef : nonStaticMethodDefs.get(methodKey)) {
-								if( enclosingClass.equals(methodDef.getEnclosingClass())) {
+								if( enclosingClass.equals(getEnclosingClass(methodDef))) {
 									addCallEdge( cg, methodCall, methodDef);
 									successfullyMapped++;
 									break;
@@ -369,12 +376,13 @@ public class PHPCGFactory {
 										}
 									}
 									// class not found
+									// System.err.println(enclosingClass);
 									if(enclosingClass.equals("")) continue;
 
 									for( Method methodDef : nonStaticMethodDefs.get(methodKey)) {
-										if( enclosingClass.equals(methodDef.getEnclosingClass()) ||
+										if( enclosingClass.equals(getEnclosingClass(methodDef)) ||
 												(PHPInheritFactory.getHierarchyMultiHashMap(enclosingClass) != null &&
-														PHPInheritFactory.getHierarchyMultiHashMap(enclosingClass).contains(methodDef.getEnclosingClass()))) {
+														PHPInheritFactory.getHierarchyMultiHashMap(enclosingClass).contains(getEnclosingClass(methodDef)))) {
 											addCallEdge( cg, methodCall, methodDef);
 											successFlag = true;
 											break;
@@ -670,18 +678,8 @@ public class PHPCGFactory {
 		// it's a static method
 		else if( functionDef instanceof Method
 				&& functionDef.getFlags().contains(PHPCSVNodeTypes.FLAG_MODIFIER_STATIC)) {
-			// use A\B\C::foo as key for a static method foo in class A\B\C
-			String staticMethodKey = ((Method)functionDef).getEnclosingClass() + "::" + functionDef.getName();
-			if( !functionDef.getEnclosingNamespace().isEmpty())
-				staticMethodKey = functionDef.getEnclosingNamespace() + "\\" + staticMethodKey;
-			
-			if( staticMethodDefs.containsKey(staticMethodKey)) {
-				System.err.println("Static method definition '" + staticMethodKey + "' ambiguous: There are at least two known " +
-						" matching static method definitions (id " + staticMethodDefs.get(staticMethodKey).getNodeId() +
-						" and id " + functionDef.getNodeId() + ")");
-			}
-			funcidMap.put(functionDef.getNodeId(),functionDef);
-			return staticMethodDefs.put( staticMethodKey, (Method)functionDef);
+			delayMethods.add((Method) functionDef);
+			return null;
 		}
 		
 		// it's a constructor
@@ -689,19 +687,9 @@ public class PHPCGFactory {
 		// also note that there are two possible constructor names: __construct() (recommended) and ClassName() (legacy)
 		else if( functionDef instanceof Method
 				&& (functionDef.getName().equals("__construct")
-						|| functionDef.getName().equals(((Method)functionDef).getEnclosingClass()))) {
-			// use A\B\C as key for the unique constructor of a class A\B\C
-			String constructorKey = ((Method)functionDef).getEnclosingClass();
-			if( !functionDef.getEnclosingNamespace().isEmpty())
-				constructorKey = functionDef.getEnclosingNamespace() + "\\" + constructorKey;
-			
-			if( constructorDefs.containsKey(constructorKey)) {
-				System.err.println("Constructor definition for '" + constructorKey + "' ambiguous: There are at least two known " +
-						" constructor definitions (id " + constructorDefs.get(constructorKey).getNodeId() +
-						" and id " + functionDef.getNodeId() + ")");
-			}
-			
-			return constructorDefs.put( constructorKey, (Method)functionDef);
+						|| functionDef.getName().equals(getEnclosingClass((Method)functionDef)))){
+			delayMethods.add((Method) functionDef);
+			return null;
 		}
 		
 		// other methods than the above are non-static methods
@@ -778,14 +766,58 @@ public class PHPCGFactory {
 	public static void setMode(String b){
 		mode = b.equals("relax");
 	}
-	public static void addDDGinfo(Object use, Object def, String identifier){
-		DDGParent.add(use, new Pair<>(def, identifier));
-	}
+	public static void addDDGinfo(Object use, Object def, String identifier){ DDGParent.add(use, new Pair<>(def, identifier)); }
 	public static boolean addGlobal(GlobalStatement globalStatement){
 		return globalStatements.add(globalStatement);
 	}
 	public static void addCfg(Long funcid, CFG cfg){
 		cfgMap.put(funcid, cfg);
+	}
+
+	// mxy: handle Methods that are delayed
+	public static void dealClassRelatedDef(){
+		for(Method functionDef: delayMethods){
+			// it's a static method
+			if(functionDef.getFlags().contains(PHPCSVNodeTypes.FLAG_MODIFIER_STATIC)) {
+				// use A\B\C::foo as key for a static method foo in class A\B\C
+				String staticMethodKey = getEnclosingClass(functionDef) + "::" + functionDef.getName();
+				if( !functionDef.getEnclosingNamespace().isEmpty())
+					staticMethodKey = functionDef.getEnclosingNamespace() + "\\" + staticMethodKey;
+
+				if( staticMethodDefs.containsKey(staticMethodKey)) {
+					System.err.println("Static method definition '" + staticMethodKey + "' ambiguous: There are at least two known " +
+							" matching static method definitions (id " + staticMethodDefs.get(staticMethodKey).getNodeId() +
+							" and id " + functionDef.getNodeId() + ")");
+				}
+				funcidMap.put(functionDef.getNodeId(),functionDef);
+				staticMethodDefs.put( staticMethodKey, functionDef);
+			}
+
+			// it's a constructor
+			// Note that a PHP constructor cannot be static, so the previous case for static methods evaluates to false;
+			// also note that there are two possible constructor names: __construct() (recommended) and ClassName() (legacy)
+			else if(functionDef.getName().equals("__construct")
+					|| functionDef.getName().equals(getEnclosingClass(functionDef))){
+				// use A\B\C as key for the unique constructor of a class A\B\C
+				String constructorKey = getEnclosingClass(functionDef);
+				if( !functionDef.getEnclosingNamespace().isEmpty())
+					constructorKey = functionDef.getEnclosingNamespace() + "\\" + constructorKey;
+
+				if( constructorDefs.containsKey(constructorKey)) {
+					System.err.println("Constructor definition for '" + constructorKey + "' ambiguous: There are at least two known " +
+							" constructor definitions (id " + constructorDefs.get(constructorKey).getNodeId() +
+							" and id " + functionDef.getNodeId() + ")");
+				}
+
+				constructorDefs.put( constructorKey, functionDef);
+			}
+		}
+
+	}
+	// mxy: get Method's enclosingclass name from classid (for ast.so 70 or higher)
+	public static String getEnclosingClass(Method method){
+		ClassDef classDef = PHPInheritFactory.getClassDef(method.getClassid());
+		return classDef != null ? classDef.getName() : "";
 	}
 
 }

@@ -303,7 +303,7 @@ public class PHPInheritFactory {
             for (ClassDef classdef : classDefs) {
 
                 String fullClassName = classdef.getNamewithNS();
-                System.out.println("Now we are visiting the AST_CLASS ASTNode : " + classdef.getName() + " ( " + fullClassName + " )");
+                //System.out.println("Now we are visiting the AST_CLASS ASTNode : " + classdef.getName() + " ( " + fullClassName + " )");
 
                 int childCount = classdef.getChildCount();
                 Long fileid = classdef.getFileId();
@@ -366,8 +366,8 @@ public class PHPInheritFactory {
 
                             // ClassHierarchyMap.add(subClass.getNamewithNS(), superClass.getNamewithNS());
 
-                            System.out.println("Child Class : " + subClass.getName() + "( " + subClass.getNamewithNS() +
-                                    " ) ==> Base Class : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
+                            //System.out.println("Child Class : " + subClass.getName() + "( " + subClass.getNamewithNS() +
+                            //        " ) ==> Base Class : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
                         } else {
                             if (baseLackedFlag == 3)
                                 baseLacked ++;
@@ -435,8 +435,8 @@ public class PHPInheritFactory {
 
                                 ClassHierarchyMap.add(subClass.getNamewithNS(), superClass.getNamewithNS());
 
-                                System.out.println("Child Interface : " + subClass.getName() + "( " + subClass.getNamewithNS() +
-                                        " ) ==> Base Interface : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
+                                //System.out.println("Child Interface : " + subClass.getName() + "( " + subClass.getNamewithNS() +
+                                //        " ) ==> Base Interface : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
                             } else {
                                 if (baseLackedFlag == 3)
                                     baseLacked ++;
@@ -600,9 +600,7 @@ public class PHPInheritFactory {
     public static ClassDef getClassDef(long classid)
     {
         ClassDef ret = null;
-
-        ret =  classIdNameMap.get(classid);
-
+        ret = classIdNameMap.get(classid);
         return ret;
     }
 
@@ -665,8 +663,8 @@ public class PHPInheritFactory {
                                 successfullyBuilt ++;
 
 
-                                System.out.println("Class : " + classCommon.getName() + " ( " + classCommon.getNamewithNS() +
-                                        " ) --> Trait : " + traitName);
+                                //System.out.println("Class : " + classCommon.getName() + " ( " + classCommon.getNamewithNS() +
+                                //        " ) --> Trait : " + traitName);
                             } else {
                                 if (traitLackedFlag == 3)
                                     traitLacked ++;
