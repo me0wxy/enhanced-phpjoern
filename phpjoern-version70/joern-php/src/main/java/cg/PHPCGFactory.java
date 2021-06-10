@@ -55,7 +55,7 @@ public class PHPCGFactory {
 
 
 	// mxy: positive or negative parse mode
-	private static boolean positive = true;
+	private static boolean mode = true;
 	// mxy: numbers to evaluate multiple func optimize
 	private static int normalRight = 0;
 	private static int corrected = 0;
@@ -138,8 +138,8 @@ public class PHPCGFactory {
 
 						// mxy: if still not found in global namespace, two cases:
 						// no definitions: do nothing
-						// multiple definitions and positive mode on, do multiple connect with includeinformations
-						if(!found && functionDefs.containsKey(functionKey) && positive){
+						// multiple definitions and mode mode on, do multiple connect with includeinformations
+						if(!found && functionDefs.containsKey(functionKey) && mode){
 							multipleConnect++;
 							for (FunctionDef functionKeyItem : functionDefs.get(functionKey)){
 								addCallEdgeWithIncludeCondition(cg, functionCall, functionKeyItem, functionKeyItem.getFileId());
@@ -491,7 +491,7 @@ public class PHPCGFactory {
 				// 3.global $a;
 				else if(expr instanceof GlobalStatement){
 					res.add(expr);
-					if(positive && globalMap.containsKey(((GlobalStatement) expr).getVariable().getNameExpression().getEscapedCodeStr())){
+					if(globalMap.containsKey(((GlobalStatement) expr).getVariable().getNameExpression().getEscapedCodeStr())){
 						// do CFG forward search in the same variables, try to get  New Assignments
 						for(GlobalStatement globalStatement:
 								globalMap.get(((GlobalStatement) expr).getVariable().getNameExpression().getEscapedCodeStr())){
@@ -775,8 +775,8 @@ public class PHPCGFactory {
 	}
 
 	// mxy
-	public static void setPositiveMode(boolean b){
-		positive = b;
+	public static void setMode(String b){
+		mode = b.equals("relax");
 	}
 	public static void addDDGinfo(Object use, Object def, String identifier){
 		DDGParent.add(use, new Pair<>(def, identifier));

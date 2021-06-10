@@ -105,6 +105,7 @@ public class Main {
 		PHPInheritFactory.writeInheritEdges(ig);
 
 		// now that we wrapped up all functions, let's finish off with the call graph
+		PHPCGFactory.setMode(cmdLine.getParseMode());
 		CG cg = PHPCGFactory.newInstance();
 		csvCGExporter.writeCGEdges(cg);
 
