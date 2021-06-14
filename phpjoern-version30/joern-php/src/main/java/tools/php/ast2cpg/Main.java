@@ -74,7 +74,7 @@ public class Main {
 		csvWriter.openEdgeFile( ".", "cpg_edges.csv");
 		Writer.setWriterImpl( csvWriter);
 
-		// let's go...
+        long startTime=System.currentTimeMillis(); //获取结束时间
 		FunctionDef rootnode;
 		while ((rootnode = (FunctionDef)extractor.getNextFunction()) != null) {
 
@@ -95,6 +95,8 @@ public class Main {
 			DDG ddg = ddgCreator.createForDefUseCFG(defUseCFG);
 			csvDDGExporter.writeDDGEdges(ddg);
 		}
+        long endTime1=System.currentTimeMillis(); //获取结束时间
+        System.out.println("Time(CFG and DDG): "+(endTime1-startTime)+"ms");
 		// mxy: we have collected all include statements and constants, build include map
 		PHPIncludeMapFactory.newInstance();
 		PHPIncludeMapFactory.writeIncludeEdges();
@@ -106,6 +108,9 @@ public class Main {
 		// now that we wrapped up all functions, let's finish off with the call graph
 		CG cg = PHPCGFactory.newInstance();
 		csvCGExporter.writeCGEdges(cg);
+
+        long endTime2=System.currentTimeMillis(); //获取结束时间
+        System.out.println("Time(all): "+(endTime2-startTime)+"ms");
 
 		csvWriter.closeEdgeFile();
 	}
