@@ -43,7 +43,7 @@ abstract class Exporter {
   const FUNC_ENTRY = "CFG_FUNC_ENTRY";
   const FUNC_EXIT = "CFG_FUNC_EXIT";
 
-  private $flag_classid = null;
+  //protected $flag_classid = null;
 
   /** Delimiter for arrays, used by format_flags() */
   protected $array_delim = ";";
@@ -89,7 +89,7 @@ abstract class Exporter {
    *         of $this->nodecount at the point in time where this
    *         function was called.)
    */
-  public function export( $ast, $funcid, $nodeline = 0, $childname = "", $childnum = 0, $namespace = "", $uses = [], $classname = "") : int {
+  public function export( $ast, $funcid, $nodeline = 0, $childname = "", $childnum = 0, $namespace = "", $uses = [], $classname = "", $flag_classid = 0) : int {
 
     // (1) if $ast is an AST node, print info and recurse
     // An instance of ast\Node declares:
@@ -125,11 +125,11 @@ abstract class Exporter {
         // If this node is a class declaration, set $classname
         if( $ast->kind === ast\AST_CLASS) {
             $classname = $nodename;
-            $this->flag_classid = $this->nodecount;
+            $flag_classid = $this->nodecount;
         }
       
       // store node, export all children and store the relationships
-      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, $nodeflags, $nodeline, null, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), $nodeendline, $nodename, $nodedoccomment, $this->getFileId(), $this->flag_classid);
+      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, $nodeflags, $nodeline, null, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), $nodeendline, $nodename, $nodedoccomment, $this->getFileId(), $flag_classid);
 
       // If this node is a function/method/closure declaration, set $funcid.
       // Note that in particular, the decl node *itself* does not have $funcid set to its own id;
@@ -148,8 +148,8 @@ abstract class Exporter {
       // (2) the name (to that of the function)
       if( $ast->kind === ast\AST_FUNC_DECL || $ast->kind === ast\AST_METHOD || $ast->kind === ast\AST_CLOSURE) {
         $funcid = $rootnode;
-        $entrynode = $this->store_node( self::LABEL_ART, self::FUNC_ENTRY, null, null, null, null, $rootnode, $classname, $this->quote_and_escape( $namespace), null, $this->quote_and_escape( $nodename), null, $this->getFileId(), $this->flag_classid);
-        $exitnode = $this->store_node( self::LABEL_ART, self::FUNC_EXIT, null, null, null, null, $rootnode, $classname, $this->quote_and_escape( $namespace), null, $this->quote_and_escape( $nodename), null, $this->getFileId(), $this->flag_classid);
+        $entrynode = $this->store_node( self::LABEL_ART, self::FUNC_ENTRY, null, null, null, null, $rootnode, $classname, $this->quote_and_escape( $namespace), null, $this->quote_and_escape( $nodename), null, $this->getFileId(), $flag_classid);
+        $exitnode = $this->store_node( self::LABEL_ART, self::FUNC_EXIT, null, null, null, null, $rootnode, $classname, $this->quote_and_escape( $namespace), null, $this->quote_and_escape( $nodename), null, $this->getFileId(), $flag_classid);
         $this->store_rel( $rootnode, $entrynode, "ENTRY");
         $this->store_rel( $rootnode, $exitnode, "EXIT");
       }
@@ -187,19 +187,19 @@ abstract class Exporter {
           $tnode = $this->store_toplevelnode( Exporter::TOPLEVEL_CLASS, $nodename, $nodeline, $nodeendline, $i, $funcid, $namespace);
           // when exporting the AST_STMT_LIST below the AST_CLASS, the
           // funcid is set to the toplevel node's id, childname is set to "stmts" (doesn't really matter, we can invent a name here), and childnum is set to 0
-          $childnode = $this->export( $child, $tnode, $nodeline, "stmts", 0, $namespace, $uses, $classname);
+          $childnode = $this->export( $child, $tnode, $nodeline, "stmts", 0, $namespace, $uses, $classname, $flag_classid);
           $this->store_rel( $tnode, $childnode, "PARENT_OF"); // AST_TOPLEVEL -> AST_STMT_LIST
           $this->store_rel( $rootnode, $tnode, "PARENT_OF"); // AST_CLASS -> AST_TOPLEVEL
         }
         // for the child of an AST_NAME node which is *not* fully qualified, we apply the translation rules currently in effect
         elseif( $ast->kind === ast\AST_NAME && $childrel === "name" && $ast->flags !== ast\flags\NAME_FQ) {
           $child = $this->applyTranslationRulesForName( $child, $uses);
-          $childnode = $this->export( $child, $funcid, $nodeline, $childrel, $i, $namespace, $uses, $classname);
+          $childnode = $this->export( $child, $funcid, $nodeline, $childrel, $i, $namespace, $uses, $classname, $flag_classid);
           $this->store_rel( $rootnode, $childnode, "PARENT_OF");
         }
         // in all other cases, we simply recurse straightforwardly
         else {
-          $childnode = $this->export( $child, $funcid, $nodeline, $childrel, $i, $namespace, $uses, $classname);
+          $childnode = $this->export( $child, $funcid, $nodeline, $childrel, $i, $namespace, $uses, $classname, $flag_classid);
           $this->store_rel( $rootnode, $childnode, "PARENT_OF");
         }
 
@@ -207,9 +207,9 @@ abstract class Exporter {
         $i++;
       }
 
-        if( $ast->kind === ast\AST_CLASS) {
-            $this->flag_classid = null;
-        }
+//        if( $ast->kind === ast\AST_CLASS) {
+//            $this->flag_classid = null;
+//        }
     }
 
     // if $ast is not an AST node, it should be a plain value
@@ -220,7 +220,7 @@ abstract class Exporter {
     else if( is_string( $ast)) {
 
       $nodetype = gettype( $ast); // should be string
-      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, $this->quote_and_escape( $ast), $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), null, null, null, $this->getFileId(), $this->flag_classid);
+      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, $this->quote_and_escape( $ast), $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), null, null, null, $this->getFileId(), $flag_classid);
     }
 
     // (3) If it a plain value and more precisely null, there's no corresponding code per se, so we just print the type.
@@ -232,7 +232,7 @@ abstract class Exporter {
     else if( $ast === null) {
 
       $nodetype = gettype( $ast); // should be the string "NULL"
-      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, null, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace),null,null,null,$this->getFileId(), $this->flag_classid);
+      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, null, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace),null,null,null,$this->getFileId(), $flag_classid);
     }
 
     // (4) if it is a plain value but not a string and not null, cast to string and store the result as $nodecode
@@ -249,7 +249,7 @@ abstract class Exporter {
 
       $nodetype = gettype( $ast);
       $nodecode = (string) $ast;
-      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, $nodecode, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), null,null,null, $this->getFileId(), $this->flag_classid);
+      $rootnode = $this->store_node( self::LABEL_AST, $nodetype, null, $nodeline, $nodecode, $childnum, $funcid, $classname, $this->quote_and_escape( $namespace), null,null,null, $this->getFileId(), $flag_classid);
     }
 
     return $rootnode;
