@@ -739,6 +739,7 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 		//String name = row.getFieldForKey(PHPCSVNodeTypes.NAME);
 		//String doccomment = row.getFieldForKey(PHPCSVNodeTypes.DOCCOMMENT);
 		long fileid = Long.parseLong(row.getFieldForKey(PHPCSVNodeTypes.FILEID));
+		//System.out.println("fileid:"+fileid);
 		long classid = Long.parseLong(row.getFieldForKey(PHPCSVNodeTypes.CLASSID));
 
 		newNode.setProperty(PHPCSVNodeTypes.TYPE.getName(), type);

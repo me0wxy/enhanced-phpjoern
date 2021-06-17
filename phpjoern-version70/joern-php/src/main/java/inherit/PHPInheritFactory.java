@@ -13,6 +13,7 @@ import misc.MultiHashMap;
 import outputModules.common.Writer;
 import tools.php.ast2cpg.CommandLineInterface;
 
+import javax.xml.soap.Name;
 import java.util.*;
 
 public class PHPInheritFactory {
@@ -165,6 +166,10 @@ public class PHPInheritFactory {
 
         for (ClassDef classDefItem : classDefs) {
             String NamewithNS = classDefItem.getNamewithNS();
+            if (NamewithNS == null) continue;
+            String classname = classDefItem.getName();
+            if (classname.equals(NamewithNS))
+                NamewithNS = "\\" + NamewithNS;
             if (NamewithNS.contains(code) && fullName.equals(NamewithNS)) {
                 ret = classDefItem;
                 count ++;
@@ -352,7 +357,9 @@ public class PHPInheritFactory {
                         if (superClass != null) {
                             String superClassFullName = superClass.getNamewithNS();
                             String subClassFullName = subClass.getNamewithNS();
-                            if (subClassFullName.equals(superClassFullName)) {
+
+                            // Child Class cannot be anonymous class
+                            if (subClassFullName != null && subClassFullName.equals(superClassFullName)) {
                                 baseCycled++;
                                 baseCycledList.add(superClass);
                                 superClass = null;
@@ -366,8 +373,8 @@ public class PHPInheritFactory {
 
                             // ClassHierarchyMap.add(subClass.getNamewithNS(), superClass.getNamewithNS());
 
-                            //System.out.println("Child Class : " + subClass.getName() + "( " + subClass.getNamewithNS() +
-                            //        " ) ==> Base Class : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
+                            System.out.println("Child Class : " + subClass.getName() + "( " + subClass.getNamewithNS() +
+                                    " ) ==> Base Class : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
                         } else {
                             if (baseLackedFlag == 3)
                                 baseLacked ++;
@@ -420,7 +427,7 @@ public class PHPInheritFactory {
                             if (superClass != null) {
                                 String superClassFullName = superClass.getNamewithNS();
                                 String subClassFullName = subClass.getNamewithNS();
-                                if (subClassFullName.equals(superClassFullName)) {
+                                if (subClassFullName !=null && subClassFullName.equals(superClassFullName)) {
                                     baseCycled++;
                                     baseCycledList.add(superClass);
                                     superClass = null;
@@ -435,8 +442,8 @@ public class PHPInheritFactory {
 
                                 ClassHierarchyMap.add(subClass.getNamewithNS(), superClass.getNamewithNS());
 
-                                //System.out.println("Child Interface : " + subClass.getName() + "( " + subClass.getNamewithNS() +
-                                //        " ) ==> Base Interface : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
+                                System.out.println("Child Interface : " + subClass.getName() + "( " + subClass.getNamewithNS() +
+                                        " ) ==> Base Interface : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
                             } else {
                                 if (baseLackedFlag == 3)
                                     baseLacked ++;
