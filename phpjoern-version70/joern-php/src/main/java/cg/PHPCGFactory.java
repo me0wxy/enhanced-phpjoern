@@ -288,7 +288,9 @@ public class PHPCGFactory {
 								.getEscapedCodeStr().equals("this")) {
 							
 							//String enclosingClass = methodCall.getEnclosingClass();
-							String enclosingClass = PHPInheritFactory.getClassDef(methodCall.getClassid()).getName();
+							ClassDef enclosingClassDef = PHPInheritFactory.getClassDef(methodCall.getClassid());
+							if(enclosingClassDef == null) break;
+							String enclosingClass = enclosingClassDef.getName();
 							for( Method methodDef : nonStaticMethodDefs.get(methodKey)) {
 								if( enclosingClass.equals(getEnclosingClass(methodDef))) {
 									addCallEdge( cg, methodCall, methodDef);
@@ -815,7 +817,7 @@ public class PHPCGFactory {
 
 	}
 	// mxy: get Method's enclosingclass name from classid (for ast.so 70 or higher)
-	public static String getEnclosingClass(Method method){
+	private static String getEnclosingClass(Method method){
 		ClassDef classDef = PHPInheritFactory.getClassDef(method.getClassid());
 		return classDef != null ? classDef.getName() : "";
 	}
