@@ -264,17 +264,13 @@ public class PHPCGFactory {
 		int notMappedBefore = 0;
 		HashMap<String, String> globalCache = new HashMap<>();
 		HashSet<String> notClasstype = new HashSet<String>(){{add("string");add("int");add("true");add("false");add("null");}};
-		
 		for( MethodCallExpression methodCall : nonStaticMethodCalls) {
-			
 			// make sure the call target is statically known
 			if( methodCall.getTargetFunc() instanceof StringExpression) {
-				
 				StringExpression methodName = (StringExpression)methodCall.getTargetFunc();
 				String methodKey = methodName.getEscapedCodeStr();
 				// let's count the dynamic methods that could be mapped, and those that cannot
 				if( nonStaticMethodDefs.containsKey(methodKey)) {
-						
 					// check whether there is only one matching function definition
 					if( nonStaticMethodDefs.get(methodKey).size() == 1) {
 						addCallEdge( cg, methodCall, nonStaticMethodDefs.get(methodKey).get(0));
@@ -289,7 +285,10 @@ public class PHPCGFactory {
 							
 							//String enclosingClass = methodCall.getEnclosingClass();
 							ClassDef enclosingClassDef = PHPInheritFactory.getClassDef(methodCall.getClassid());
-							if(enclosingClassDef == null) break;
+							if(enclosingClassDef == null) {
+								ambiguousNotMapped++;
+								continue;
+							}
 							String enclosingClass = enclosingClassDef.getName();
 							for( Method methodDef : nonStaticMethodDefs.get(methodKey)) {
 								if( enclosingClass.equals(getEnclosingClass(methodDef))) {
@@ -412,7 +411,7 @@ public class PHPCGFactory {
 			else
 				System.err.println("Statically unknown non-static method call at node id " + methodCall.getNodeId() + "!");
 		}
-		
+
 		System.out.println();
 		System.out.println("Summary dynamic method call construction");
 		System.out.println("----------------------------------------");
@@ -430,7 +429,7 @@ public class PHPCGFactory {
 				(((float)successfullyMapped-(float)notMappedBefore)/((float)successfullyMapped+(float)ambiguousNotMapped)) * 100;
 		System.out.println( "=> After Optimization, it improves " + (mappedMethodCallsPercent-mappedMethodCallsPercentBefore) + "%.");
 		System.out.println();
-
+		
 
 		/* Statistics on method defs */
 		int uniqueDefs = 0, ambiguousDefs = 0;
