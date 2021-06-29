@@ -110,6 +110,25 @@ public class Main {
 		csvCGExporter.writeCGEdges(cg);
 
 		csvWriter.closeEdgeFile();
+
+		System.out.println();
+		System.out.println("ast.so 70 new AST node kinds");
+		System.out.println("----------------------------------------");
+
+		System.out.println("The number of AST_NULLABEL = " + PHPCSVNodeInterpreter.counter_new_NULLABALE);
+		System.out.println("The number of AST_ARROW_FUNC = " + PHPCSVNodeInterpreter.counter_new_ARROW_FUNC);
+		System.out.println("The number of AST_CLASS_NAME = " + PHPCSVNodeInterpreter.counter_new_CLASS_NAME);
+		System.out.println("The number of AST_PROP_GROUP = " + PHPCSVNodeInterpreter.counter_new_PROP_GROUP);
+
+		System.out.println();
+		System.out.println("ast.so 70 changed AST node kinds");
+		System.out.println("----------------------------------------");
+
+		System.out.println("The number of AST_CLASS = " + PHPCSVNodeInterpreter.counter_CLASS);
+		System.out.println("The number of AST_CLOSURE = " + PHPCSVNodeInterpreter.counter_CLOSURE);
+		System.out.println("The number of AST_CONST_ELEM = " + PHPCSVNodeInterpreter.counter_CONST_ELEM);
+		System.out.println("The number of AST_FUNC_DECL = " + PHPCSVNodeInterpreter.counter_FUNC_DECL);
+		System.out.println("The number of AST_METHOD = " + PHPCSVNodeInterpreter.counter_METHOD);
 	}
 
 	private static void parseCommandLine(String[] args)	{

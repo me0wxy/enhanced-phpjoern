@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Anonymous Class
+ */
+
 class SomeClass {}
 interface SomeInterface {}
 trait SomeTrait {}

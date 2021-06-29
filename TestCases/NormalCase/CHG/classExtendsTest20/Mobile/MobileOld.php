@@ -1,5 +1,10 @@
 <?php
 
+/**
+  * IncludeMap:MobileOld.php
+  */
+
+
 class Mobile {
     protected $message;
     
@@ -15,3 +20,4 @@ class Mobile {
 
     // ...
 }
+

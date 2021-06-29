@@ -82,6 +82,25 @@ import ast.expressions.ClassNameExpression;
 
 public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 {
+	// count the new AST_NULLABLE
+	public static long counter_new_NULLABALE = 0;
+	// count the new AST_ARROW_FUNC
+	public static long counter_new_ARROW_FUNC = 0;
+	// count the new AST_CLASS_NAME
+	public static long counter_new_CLASS_NAME = 0;
+	// count the new AST_PROP_GROUP
+	public static long counter_new_PROP_GROUP = 0;
+
+	// count the AST node AST_CLASS
+	public static long counter_CLASS = 0;
+	// count the AST node AST_CLOSURE
+	public static long counter_CLOSURE = 0;
+	// count the AST node AST_CONST_ELEM
+	public static long counter_CONST_ELEM = 0;
+	// count the AST node AST_FUNC_DECL
+	public static long counter_FUNC_DECL = 0;
+	// count the AST node AST_METHOD
+	public static long counter_METHOD = 0;
 
 	@Override
 	public long handle(KeyedCSVRow row, ASTUnderConstruction ast)
@@ -121,15 +140,19 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 				break;
 			case PHPCSVNodeTypes.TYPE_FUNC_DECL:
 				retval = handleFunction(row, ast);
+				counter_FUNC_DECL ++;
 				break;
 			case PHPCSVNodeTypes.TYPE_CLOSURE:
 				retval = handleClosure(row, ast);
+				counter_CLOSURE ++;
 				break;
 			case PHPCSVNodeTypes.TYPE_METHOD:
 				retval = handleMethod(row, ast);
+				counter_METHOD ++;
 				break;
 			case PHPCSVNodeTypes.TYPE_CLASS:
 				retval = handleClass(row, ast);
+				counter_CLASS ++;
 				break;
 
 			// nodes without children (leafs)
@@ -250,6 +273,7 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 				// version 70
 			case PHPCSVNodeTypes.TYPE_CLASS_NAME:
 				retval = handleClassName(row, ast);
+				counter_new_CLASS_NAME ++;
 				break;
 			case PHPCSVNodeTypes.TYPE_ASSIGN:
 				retval = handleAssign(row, ast);
@@ -306,6 +330,7 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 				break;
 			case PHPCSVNodeTypes.TYPE_CONST_ELEM:
 				retval = handleConstantElement(row, ast);
+				counter_CONST_ELEM ++;
 				break;
 			case PHPCSVNodeTypes.TYPE_USE_TRAIT:
 				retval = handleUseTrait(row, ast);
@@ -417,16 +442,19 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 				// statements version 70
 			case PHPCSVNodeTypes.TYPE_PROP_GROUP:
 				retval = handlePropertyGroup(row, ast);
+				counter_new_PROP_GROUP ++;
 				break;
 
 				// version 70
 			case PHPCSVNodeTypes.TYPE_NULLABLE_TYPE:
 				retval = handleNullableType(row, ast);
+				counter_new_NULLABALE ++;
 				break;
 
 				// version 70 AST_ARROW_FUNC
 			case PHPCSVNodeTypes.TYPE_ARROW_FUNC:
 				retval = handleArrowFunction(row, ast);
+				counter_new_ARROW_FUNC ++;
 				break;
 
 			default:

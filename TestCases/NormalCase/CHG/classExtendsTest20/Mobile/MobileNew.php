@@ -1,5 +1,9 @@
 <?php
 
+/**
+  * IncludeMap: MobileNew.php
+  */
+
 class Mobile {
     protected $face_id;
     

@@ -2225,7 +2225,7 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 		if (endNode instanceof NullNode)
 			startNode.addChild(endNode);
 		else
-			startNode.addArrayElement((ArrayElement)endNode);
+			startNode.addArrayElement((Expression) endNode);
 
 		return 0;
 	}

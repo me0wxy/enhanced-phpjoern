@@ -2,7 +2,7 @@
 
 namespace Kanboard\Action;
 
-abstract class Base extends \Kanboard\Core\Base
+abstract class Base extends Kanboard\Core\Base
 {
 	// ...
 }
