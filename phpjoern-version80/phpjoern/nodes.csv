@@ -1,0 +1,63 @@
+id:int	labels:label	type	flags:string_array	lineno:int	code	childnum:int	funcid:int	classname	namespace	endlineno:int	name	doccomment	fileid:int	classid:int
+0	Filesystem	File									"money6.php"			
+1	AST	AST_TOPLEVEL	TOPLEVEL_FILE	1						16	"money6.php"		0	
+2	Artificial	CFG_FUNC_ENTRY					1				"money6.php"		0	
+3	Artificial	CFG_FUNC_EXIT					1				"money6.php"		0	
+4	AST	AST_STMT_LIST		1		0	1						0	0
+5	AST	AST_CLASS		3		0	1			6			0	5
+6	AST	string		3	"Currency"	0	1						0	5
+7	AST	NULL		3		1	1						0	5
+8	AST	NULL		3		2	1						0	5
+9	AST	NULL		3		3	1						0	5
+10	AST	AST_TOPLEVEL	TOPLEVEL_CLASS	3		4	1			6			0	
+11	Artificial	CFG_FUNC_ENTRY					10						0	
+12	Artificial	CFG_FUNC_EXIT					10						0	
+13	AST	AST_STMT_LIST		4		0	10						0	5
+14	AST	NULL		3		5	1						0	5
+15	AST	integer		3	0	6	1						0	5
+16	AST	AST_CLASS		8		1	1			14			0	16
+17	AST	string		8	"Money"	0	1						0	16
+18	AST	NULL		8		1	1						0	16
+19	AST	NULL		8		2	1						0	16
+20	AST	NULL		8		3	1						0	16
+21	AST	AST_TOPLEVEL	TOPLEVEL_CLASS	8		4	1			14			0	
+22	Artificial	CFG_FUNC_ENTRY					21						0	
+23	Artificial	CFG_FUNC_EXIT					21						0	
+24	AST	AST_STMT_LIST		9		0	21						0	16
+25	AST	AST_METHOD	MODIFIER_PUBLIC	10		0	21			13			0	16
+26	Artificial	CFG_FUNC_ENTRY					25						0	16
+27	Artificial	CFG_FUNC_EXIT					25						0	16
+28	AST	string		10	"__construct"	0	25						0	16
+29	AST	NULL		10		1	25						0	16
+30	AST	AST_PARAM_LIST		11		2	25						0	16
+31	AST	AST_PARAM	PARAM_MODIFIER_PUBLIC	11		0	25						0	16
+32	AST	AST_NAME	NAME_NOT_FQ	11		0	25						0	16
+33	AST	string		11	"Currency"	0	25						0	16
+34	AST	string		11	"currency"	1	25						0	16
+35	AST	NULL		11		2	25						0	16
+36	AST	NULL		11		3	25						0	16
+37	AST	NULL		11		4	25						0	16
+38	AST	AST_PARAM	PARAM_MODIFIER_PUBLIC	12		1	25						0	16
+39	AST	AST_TYPE	TYPE_LONG	12		0	25						0	16
+40	AST	string		12	"amount"	1	25						0	16
+41	AST	NULL		12		2	25						0	16
+42	AST	NULL		12		3	25						0	16
+43	AST	NULL		12		4	25						0	16
+44	AST	AST_STMT_LIST		13		3	25						0	16
+45	AST	NULL		10		4	25						0	16
+46	AST	NULL		10		5	25						0	16
+47	AST	integer		10	1	6	25						0	16
+48	AST	NULL		8		5	1						0	16
+49	AST	integer		8	2	6	1						0	16
+50	AST	AST_ASSIGN		16		2	1						0	0
+51	AST	AST_VAR		16		0	1						0	0
+52	AST	string		16	"money"	0	1						0	0
+53	AST	AST_NEW		16		1	1						0	0
+54	AST	AST_NAME	NAME_NOT_FQ	16		0	1						0	0
+55	AST	string		16	"Money"	0	1						0	0
+56	AST	AST_ARG_LIST		16		1	1						0	0
+57	AST	AST_NEW		16		0	1						0	0
+58	AST	AST_NAME	NAME_NOT_FQ	16		0	1						0	0
+59	AST	string		16	"Currency"	0	1						0	0
+60	AST	AST_ARG_LIST		16		1	1						0	0
+61	AST	integer		16	1	1	1						0	0
