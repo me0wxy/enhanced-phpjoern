@@ -2538,10 +2538,10 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 		switch (childnum)
 		{
 			case 0:	// expr child: Expression child
-				startNode.setLeftExpression((Expression)endNode);
+				startNode.setTargetObject((Expression)endNode);
 				break;
 			case 1:	// method child: Expression child
-				startNode.setMethod((Expression)endNode);
+				startNode.setTargetFunc((Expression)endNode);
 				break;
 			case 2:	// args child: ArgumentList child(AST_ARG_LIST)
 				startNode.setArgumentList((ArgumentList)endNode);

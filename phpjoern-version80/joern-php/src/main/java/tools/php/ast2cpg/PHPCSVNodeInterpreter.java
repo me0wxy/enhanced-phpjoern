@@ -3442,6 +3442,8 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 		ast.addNodeWithId(newNode, id);
 		newNode.setNodeId(id);
 
+		PHPCGFactory.addFunctionCall(newNode);
+
 		return id;
 	}
 

@@ -1,3 +1,5 @@
+This File is from open source project **Phan**：https://codeclimate.com/github/etsy/phan/src/Phan/Language/Internal/ConstantDocumentationMap.php/source
+
 ```php
 <?php // phpcs:ignoreFile
 namespace Phan\Language\Internal;
