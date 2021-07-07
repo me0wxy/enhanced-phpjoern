@@ -451,6 +451,10 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 				errno = handleNullsafeMethodCall((NullsafeMethodCallExpression)startNode, endNode, childnum);
 				break;
 
+			case PHPCSVNodeTypes.TYPE_CLASS_CONST_GROUP:
+				errno = handleClassConstantGroup((ClassConstantGroup) startNode, endNode, childnum);
+				break;
+
 			default:
 				errno = defaultHandler(startNode, endNode, childnum);
 		}
@@ -614,7 +618,13 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 				else
 					startNode.setReturnType((Identifier)endNode);
 				break;
-			case 6:
+			case 6:	// attributes child: either AttributeList or Null node
+				if ( endNode instanceof NullNode)
+					startNode.addChild(endNode);
+				else
+					startNode.setAttributeList((AttributeList)endNode);
+				break;
+			case 7:
 				startNode.setOffset((IntegerExpression)endNode);
 				break;
 
@@ -2545,6 +2555,29 @@ public class PHPCSVEdgeInterpreter implements CSVRowInterpreter
 				break;
 			case 2:	// args child: ArgumentList child(AST_ARG_LIST)
 				startNode.setArgumentList((ArgumentList)endNode);
+				break;
+
+			default:
+				errno = 1;
+		}
+
+		return errno;
+	}
+
+	private int handleClassConstantGroup( ClassConstantGroup startNode, ASTNode endNode, int childnum)
+	{
+		int errno = 0;
+
+		switch (childnum)
+		{
+			case 0:	// class child: ClassConstantDeclaration
+				startNode.setClassConstantDeclaration((ClassConstantDeclaration)endNode);
+				break;
+			case 1:	// attributes child: either AttributeList or Null Node
+				if (endNode instanceof NullNode)
+					startNode.addChild(endNode);
+				else
+					startNode.setAttributeList((AttributeList)endNode);
 				break;
 
 			default:

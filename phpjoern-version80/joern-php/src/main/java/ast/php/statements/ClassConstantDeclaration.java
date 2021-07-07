@@ -5,6 +5,9 @@ import java.util.LinkedList;
 
 import ast.logical.statements.Statement;
 
+/**
+ * from ast.so 80 on, the AST_CLASS_CONST_FUNC(ClassConstantDeclaration) is wrapped by AST_CLASS_CONST_GROUP
+ */
 public class ClassConstantDeclaration extends Statement implements Iterable<ConstantElement>
 {
 

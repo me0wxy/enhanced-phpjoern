@@ -105,6 +105,13 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 	// count the AST node AST_METHOD
 	public static long counter_METHOD = 0;
 
+	// count the AST node AST_ATTRIBUTE_LIST
+	public static long counter_new_ATTRIBUTE_LIST = 0;
+	// count the AST node AST_ATTRIBUTE_GROUP
+	public static long counter_new_ATTRIBUTE_GROUP = 0;
+	// count the AST node AST_ATTRIBUTE
+	public static long counter_new_ATTRIBUTE = 0;
+
 	@Override
 	public long handle(KeyedCSVRow row, ASTUnderConstruction ast)
 			throws InvalidCSVFile
@@ -467,14 +474,17 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 
 			case PHPCSVNodeTypes.TYPE_ATTRIBUTE_LIST:
 				retval = handleAttributeList(row, ast);
+				counter_new_ATTRIBUTE_LIST ++;
 				break;
 
 			case PHPCSVNodeTypes.TYPE_ATTRIBUTE_GROUP:
 				retval = handleAttributeGroup(row, ast);
+				counter_new_ATTRIBUTE_GROUP ++;
 				break;
 
 			case PHPCSVNodeTypes.TYPE_ATTRIBUTE:
 				retval = handleAttribute(row, ast);
+				counter_new_ATTRIBUTE ++;
 				break;
 
 			case PHPCSVNodeTypes.TYPE_NAMED_ARG:
@@ -499,6 +509,10 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 
 			case PHPCSVNodeTypes.TYPE_NULLSAFE_METHOD_CALL:
 				retval = handleNullsafeMethodCall(row, ast);
+				break;
+
+			case PHPCSVNodeTypes.TYPE_CLASS_CONST_GROUP:
+				retval = handleClassConstantGroup(row, ast);
 				break;
 
 			default:
@@ -3447,4 +3461,29 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 		return id;
 	}
 
+
+	public long handleClassConstantGroup(KeyedCSVRow row, ASTUnderConstruction ast)
+	{
+		ClassConstantGroup newNode = new ClassConstantGroup();
+
+		String type = row.getFieldForKey(PHPCSVNodeTypes.TYPE);
+		String flags = row.getFieldForKey(PHPCSVNodeTypes.FLAGS);
+		String lineno = row.getFieldForKey(PHPCSVNodeTypes.LINENO);
+		String childnum = row.getFieldForKey(PHPCSVNodeTypes.CHILDNUM);
+		long fileid = Long.parseLong(row.getFieldForKey(PHPCSVNodeTypes.FILEID));
+
+		newNode.setProperty(PHPCSVNodeTypes.TYPE.getName(), type);
+		newNode.setFlags(flags);
+		CodeLocation codeloc = new CodeLocation();
+		codeloc.startLine = Integer.parseInt(lineno);
+		newNode.setFileId(fileid);
+		newNode.setLocation(codeloc);
+		newNode.setProperty(PHPCSVNodeTypes.CHILDNUM.getName(), childnum);
+
+		long id = Long.parseLong(row.getFieldForKey(PHPCSVNodeTypes.NODE_ID));
+		ast.addNodeWithId(newNode, id);
+		newNode.setNodeId(id);
+
+		return id;
+	}
 }

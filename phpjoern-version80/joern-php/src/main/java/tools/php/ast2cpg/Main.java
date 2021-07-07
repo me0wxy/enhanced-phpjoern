@@ -11,6 +11,7 @@ import filesystem.IncludeMap;
 import filesystem.PHPIncludeMapFactory;
 import inherit.IG;
 import inherit.PHPInheritFactory;
+import inputModules.csv.PHPCSVNodeTypes;
 import org.apache.commons.cli.ParseException;
 
 import ast.php.functionDef.FunctionDef;
@@ -129,6 +130,14 @@ public class Main {
 		System.out.println("The number of AST_CONST_ELEM = " + PHPCSVNodeInterpreter.counter_CONST_ELEM);
 		System.out.println("The number of AST_FUNC_DECL = " + PHPCSVNodeInterpreter.counter_FUNC_DECL);
 		System.out.println("The number of AST_METHOD = " + PHPCSVNodeInterpreter.counter_METHOD);
+
+		System.out.println();
+		System.out.println("ast.so 80 new AST node kinds");
+		System.out.println("----------------------------------------");
+
+		System.out.println("The number of AST_ATTRIBUTE_LIST = " + PHPCSVNodeInterpreter.counter_new_ATTRIBUTE_LIST);
+		System.out.println("The number of AST_ATTRIBUTE_GROUP = " + PHPCSVNodeInterpreter.counter_new_ATTRIBUTE_GROUP);
+		System.out.println("The number of AST_ATTRIBUTE = " + PHPCSVNodeInterpreter.counter_new_ATTRIBUTE);
 	}
 
 	private static void parseCommandLine(String[] args)	{
