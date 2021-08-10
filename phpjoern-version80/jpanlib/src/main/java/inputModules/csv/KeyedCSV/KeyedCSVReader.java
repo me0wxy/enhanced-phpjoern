@@ -15,6 +15,7 @@ public class KeyedCSVReader
 	private CSVParser parser;
 	private Iterator<CSVRecord> iterator;
 	private int currentLineNumber;
+	// public static CSVKey[] recordkeys = null;
 
 	public void init(Reader reader) throws IOException
 	{

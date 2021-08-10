@@ -1,5 +1,10 @@
 package ast.expressions;
 
+/**
+ * An instance property usage of the form `expr->prop` (children: expr, prop)
+ * expr: private Expression objectExpression
+ * prop: private Expression propertyExpression
+ */
 public class PropertyExpression extends MemberAccess
 {
 	private Expression objectExpression = null;

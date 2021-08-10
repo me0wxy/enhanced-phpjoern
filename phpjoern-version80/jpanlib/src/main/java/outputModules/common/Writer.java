@@ -49,6 +49,18 @@ public class Writer
 		writerImpl.writeEdge(srcId, dstId, properties, edgeType);
 	}
 
+	public static void appendRels(long srcId, long dstId,String edgeType)
+	{
+		writerImpl.writeRels(srcId, dstId, edgeType);
+	}
+
+	public static void appendNodes(String id, String labels, String type, String flags, String lineno,
+								   String code, String childnum, String funcid, String classname, String namespace,
+								   String endlineno, String name, String doccomment, String fileid, String classid) {
+		writerImpl.writeNodes(id, labels, type, flags, lineno, code, childnum, funcid, classname, namespace,
+								endlineno, name, doccomment, fileid, classid);
+	}
+
 	public static WriterImpl getWriterImpl()
 	{
 		return writerImpl;

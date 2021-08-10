@@ -112,6 +112,9 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 	// count the AST node AST_ATTRIBUTE
 	public static long counter_new_ATTRIBUTE = 0;
 
+	// get the maximum_id, and the fake class node is equal to maximum_id + 1
+	public static long max_retval = -1;
+
 	@Override
 	public long handle(KeyedCSVRow row, ASTUnderConstruction ast)
 			throws InvalidCSVFile
@@ -519,6 +522,10 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 				retval = defaultHandler(row, ast);
 		}
 
+		// update max_retval
+		if (max_retval < retval)
+			max_retval = retval;
+
 		return retval;
 	}
 
@@ -862,6 +869,10 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 		long fileid = Long.parseLong(row.getFieldForKey(PHPCSVNodeTypes.FILEID));
 		String namespace = row.getFieldForKey(PHPCSVNodeTypes.NAMESPACE);
 		long classid = Long.parseLong(row.getFieldForKey(PHPCSVNodeTypes.CLASSID));
+
+		// add funcid for fake class edges
+		String funcid = row.getFieldForKey(PHPCSVNodeTypes.FUNCID);
+		newNode.setProperty(PHPCSVNodeTypes.FUNCID.getName(), funcid);
 
 		newNode.setProperty(PHPCSVNodeTypes.TYPE.getName(), type);
 		newNode.setFlags(flags);

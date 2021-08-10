@@ -55,4 +55,6 @@ public class EdgeTypes
 	 */
 	public static final String CALLS = "CALLS";
 
+	public static final String PARENT_OF = "PARENT_OF";
+
 }

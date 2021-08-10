@@ -1,6 +1,7 @@
 package inherit;
 
 import ast.ASTNode;
+import ast.CodeLocation;
 import ast.NullNode;
 import ast.expressions.Identifier;
 import ast.expressions.IdentifierList;
@@ -9,11 +10,14 @@ import ast.php.declarations.ClassDef;
 import ast.php.statements.blockstarters.TraitAdaptations;
 import ast.php.statements.blockstarters.UseTrait;
 import filesystem.PHPIncludeMapFactory;
+import inherit.fake.classdef.FakeClassCreator;
+import inherit.fake.classdef.FakeClassEdge;
+import inherit.fake.classdef.FakeClassNode;
 import misc.MultiHashMap;
 import outputModules.common.Writer;
 import tools.php.ast2cpg.CommandLineInterface;
 
-import javax.xml.soap.Name;
+import javax.xml.stream.Location;
 import java.util.*;
 
 public class PHPInheritFactory {
@@ -37,6 +41,9 @@ public class PHPInheritFactory {
     private static long baseLacked = 0;
     private static long baseLackedFlag = 0;
 
+    private static HashMap<ClassDef, String> baseLackedClassExtendsPairs = new HashMap<>();
+
+    // * ambiguous edges can be solved by relax mode
     private static long baseAmbiguous = 0;
     private static Boolean baseAmbiguousFlag = false;
 
@@ -233,8 +240,8 @@ public class PHPInheritFactory {
     /**
      * Adds an EXTENDS edge to a given Inherit Graph
      * @param ig
-     * @param srcClassDef
-     * @param destClassDef
+     * @param srcClassDef subClass
+     * @param destClassDef  baseClass
      * @return true if an edge is added, false otherwise
      */
     private static boolean addInheritExtendsEdge(IG ig, ClassDef srcClassDef, ClassDef destClassDef) {
@@ -246,6 +253,21 @@ public class PHPInheritFactory {
         ret = ig.addVertex(src);
         ig.addVertex(dest);
         ig.addEdge(new InheritExtendsEdge(src, dest));
+
+        return ret;
+    }
+
+    private static boolean addFakeCHGEdge(IG ig, ClassDef srcClassDef, ClassDef destClassDef) {
+
+        boolean ret = false;
+
+        InheritNode src = new InheritNode(srcClassDef);
+        InheritNode dest = new InheritNode(destClassDef);
+
+        ret = ig.addVertex(src);
+        ig.addVertex(dest);
+        // FakeClassEdge edge = new FakeClassEdge(srcNode, destNode);
+        ig.addEdge(new FakeClassEdge(src, dest));
 
         return ret;
     }
@@ -377,7 +399,11 @@ public class PHPInheritFactory {
                                     " ) ==> Base Class : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
                         } else {
                             if (baseLackedFlag == 3)
+                            {
                                 baseLacked ++;
+                                // save baseLacked parent-child class(ClassDef)-classname(String) Pair
+                                baseLackedClassExtendsPairs.put(subClass, code);
+                            }
                             if (baseAmbiguousFlag) {
                                 ambiguousClassExtendsNodes.put(classdef, code);
                                 baseAmbiguous++;
@@ -488,6 +514,29 @@ public class PHPInheritFactory {
         System.out.println("Ambiguous not handled: " + ambiguousPropotion + " %.");
         float lackedProption = inheritNodeNum == 0 ? 0 : ((float) (baseLacked + baseCycled) / (float) inheritNodeNum) * 100;
         System.out.println("Lacked Base Definition not handled: " + lackedProption + " %.");
+
+        // solve FAKE extends/implements edges
+        for (ClassDef subclass : baseLackedClassExtendsPairs.keySet())
+        {
+            FakeClassCreator fakeClassCreator = new FakeClassCreator();
+            String classname = baseLackedClassExtendsPairs.get(subclass);
+            // the fake class gets the same funcid as subclass(Child Class)
+            String funcid = subclass.getProperty("funcid");
+            // the fake class gets the same fileid as subclass(Child Class)
+            Long fileid = subclass.getFileId();
+
+            CodeLocation codeloc = subclass.getLocation();
+            // get lineno
+            String lineno = Long.toString(codeloc.startLine);
+            // get endlineno
+            String endlineno = Long.toString(codeloc.endLine);
+
+            String flags = "";
+
+            // create fake base class
+            ClassDef fakeClassDef = fakeClassCreator.createClassDefNode(classname, flags, funcid, fileid, lineno, endlineno);
+            addFakeCHGEdge(ig, subclass, fakeClassDef);
+        }
     }
 
     public static ClassDef getClassTraitByNamespace(String traitName) {

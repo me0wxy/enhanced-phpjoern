@@ -18,6 +18,10 @@ public class InheritNode {
         init( node);
     }
 
+    public InheritNode() {
+
+    }
+
     private void init(ASTNode node) {
         if (null == node)
             throw new IllegalArgumentException( "Cannot construct a IGNode with a null node.");

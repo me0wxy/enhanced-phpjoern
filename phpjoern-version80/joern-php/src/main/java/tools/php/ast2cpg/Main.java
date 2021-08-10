@@ -3,15 +3,13 @@ package tools.php.ast2cpg;
 import java.io.FileReader;
 import java.io.IOException;
 
-import ast.expressions.Expression;
 import ast.php.statements.GlobalStatement;
 import cfg.nodes.ASTNodeContainer;
 import cfg.nodes.CFGNode;
-import filesystem.IncludeMap;
 import filesystem.PHPIncludeMapFactory;
 import inherit.IG;
 import inherit.PHPInheritFactory;
-import inputModules.csv.PHPCSVNodeTypes;
+import inherit.fake.classdef.FakeClassNodeSet;
 import org.apache.commons.cli.ParseException;
 
 import ast.php.functionDef.FunctionDef;
@@ -21,17 +19,16 @@ import cfg.PHPCFGFactory;
 import cg.CG;
 import cg.PHPCGFactory;
 import ddg.CFGAndUDGToDefUseCFG;
-import ddg.DDGCreator;
 import ddg.php.PHPDDGCreator;
 import ddg.DataDependenceGraph.DDG;
 import ddg.DefUseCFG.DefUseCFG;
 import inputModules.csv.KeyedCSV.exceptions.InvalidCSVFile;
 import inputModules.csv.csvFuncExtractor.CSVFunctionExtractor;
 import outputModules.common.Writer;
+import outputModules.csv.CSVAppendWriterImpl;
+import outputModules.csv.MultiPairCSVAppendWriterImpl;
 import outputModules.csv.MultiPairCSVWriterImpl;
-import outputModules.csv.exporters.CSVCFGExporter;
-import outputModules.csv.exporters.CSVCGExporter;
-import outputModules.csv.exporters.CSVDDGExporter;
+import outputModules.csv.exporters.*;
 import udg.CFGToUDGConverter;
 import udg.php.useDefAnalysis.PHPASTDefUseAnalyzer;
 import udg.useDefGraph.UseDefGraph;
@@ -53,6 +50,10 @@ public class Main {
 	static CSVCFGExporter csvCFGExporter = new CSVCFGExporter();
 	static CSVDDGExporter csvDDGExporter = new CSVDDGExporter();
 	static CSVCGExporter csvCGExporter = new CSVCGExporter();
+
+	// my own defined exporters
+	static CSVFakeParentOfExporter CSVFakeParentOfExporter = new CSVFakeParentOfExporter();
+	static CSVFakeNodeExporter CSVFakeNodeExporter = new CSVFakeNodeExporter();
 
 	public static void main(String[] args) throws InvalidCSVFile, IOException {
 		// parse command line
@@ -138,6 +139,30 @@ public class Main {
 		System.out.println("The number of AST_ATTRIBUTE_LIST = " + PHPCSVNodeInterpreter.counter_new_ATTRIBUTE_LIST);
 		System.out.println("The number of AST_ATTRIBUTE_GROUP = " + PHPCSVNodeInterpreter.counter_new_ATTRIBUTE_GROUP);
 		System.out.println("The number of AST_ATTRIBUTE = " + PHPCSVNodeInterpreter.counter_new_ATTRIBUTE);
+
+		System.out.println("The maximum retval = " + PHPCSVNodeInterpreter.max_retval);
+
+
+		System.out.println(FakeClassNodeSet.fakeClassNodes);
+
+
+
+
+		// initialize writers
+		MultiPairCSVAppendWriterImpl csvAppendWriter = new MultiPairCSVAppendWriterImpl();
+		csvAppendWriter.openRelsFile( ".", "rels.csv");
+		Writer.setWriterImpl( csvAppendWriter);
+
+		CSVFakeParentOfExporter.appendParentOfRels();
+
+		csvAppendWriter.closeRelsFile();
+
+		csvAppendWriter.openNodesFile(".", "nodes.csv");
+		Writer.setWriterImpl( csvAppendWriter);
+
+		CSVFakeNodeExporter.appendFakeNode();
+
+		csvAppendWriter.closeNodesFile();
 	}
 
 	private static void parseCommandLine(String[] args)	{

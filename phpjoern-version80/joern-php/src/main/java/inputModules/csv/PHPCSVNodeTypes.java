@@ -256,15 +256,29 @@ public class PHPCSVNodeTypes
 	// flags for TYPE_TYPE nodes (exclusive)
 	public static final String FLAG_TYPE_ARRAY = "TYPE_ARRAY";
 	public static final String FLAG_TYPE_CALLABLE = "TYPE_CALLABLE";
-
-	// flags for TYPE_CAST nodes (exclusive)
-	public static final String FLAG_TYPE_NULL = "TYPE_NULL";
+	// ast.so 40
+	public static final String FLAG_TYPE_VOID = "TYPE_VOID";
 	public static final String FLAG_TYPE_BOOL = "TYPE_BOOL";
 	public static final String FLAG_TYPE_LONG = "TYPE_LONG";
 	public static final String FLAG_TYPE_DOUBLE = "TYPE_DOUBLE";
 	public static final String FLAG_TYPE_STRING = "TYPE_STRING";
-	//public static final String FLAG_TYPE_ARRAY = "TYPE_ARRAY"; // already defined above
+	public static final String FLAG_TYPE_ITERABLE = "TYPE_ITERABLE";
+	// ast.so 70
 	public static final String FLAG_TYPE_OBJECT = "TYPE_OBJECT";
+	// ast.so 80
+	public static final String FLAG_TYPE_NULL = "TYPE_NULL";
+	public static final String FLAG_TYPE_FALSE = "TYPE_FALSE";
+	public static final String FLAG_TYPE_MIXED = "TYPE_MIXED";
+	public static final String FLAG_TYPE_STATIC = "TYPE_STATIC";
+
+	// flags for TYPE_CAST nodes (exclusive)
+//	public static final String FLAG_TYPE_NULL = "TYPE_NULL"; // already defined above
+//	public static final String FLAG_TYPE_BOOL = "TYPE_BOOL"; // already defined above
+//	public static final String FLAG_TYPE_LONG = "TYPE_LONG"; // already defined above
+//	public static final String FLAG_TYPE_DOUBLE = "TYPE_DOUBLE"; // already defined above
+//	public static final String FLAG_TYPE_STRING = "TYPE_STRING"; // already defined above
+	//public static final String FLAG_TYPE_ARRAY = "TYPE_ARRAY"; // already defined above
+//	public static final String FLAG_TYPE_OBJECT = "TYPE_OBJECT"; // already defined above
 	
 	// flags for TYPE_UNARY_OP nodes (exclusive)
 	public static final String FLAG_UNARY_BOOL_NOT = "UNARY_BOOL_NOT";
@@ -322,4 +336,5 @@ public class PHPCSVNodeTypes
 	public static final String FLAG_EXEC_INCLUDE_ONCE = "EXEC_INCLUDE_ONCE";
 	public static final String FLAG_EXEC_REQUIRE = "EXEC_REQUIRE";
 	public static final String FLAG_EXEC_REQUIRE_ONCE = "EXEC_REQUIRE_ONCE";
+
 }

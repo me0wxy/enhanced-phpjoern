@@ -60,6 +60,7 @@ public abstract class CSVWriterImpl implements WriterImpl {
 	public void writeEdge(long srcId, long dstId,
 			Map<String, Object> properties, String edgeType)
 	{
+		// PARENT_OF edge also added by this function
 		edgeWriter.print(srcId);
 		edgeWriter.print(SEPARATOR);
 		edgeWriter.print(dstId);
@@ -74,6 +75,20 @@ public abstract class CSVWriterImpl implements WriterImpl {
 				edgeWriter.write(escape(propValue));
 		}
 		edgeWriter.write("\n");
+
+	}
+
+	@Override
+	public void writeRels(long srcId, long dstId,
+						  String edgeType) {
+
+	}
+
+	@Override
+	public void writeNodes(String id, String labels, String type, String flags, String lineno,
+	String code, String childnum, String funcid, String classname, String namespace,
+	String endlineno, String name, String doccomment, String fileid, String classid)
+	{
 
 	}
 

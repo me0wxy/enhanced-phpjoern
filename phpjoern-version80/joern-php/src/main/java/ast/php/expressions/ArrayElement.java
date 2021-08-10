@@ -2,6 +2,9 @@ package ast.php.expressions;
 
 import ast.expressions.Expression;
 
+/**
+ * An element of an array literal. The key is `null` if there is no key (children: value, key)
+ */
 public class ArrayElement extends Expression
 {
 	private Expression value = null;
