@@ -1,9 +1,6 @@
 package outputModules.csv.common;
 
-import inherit.fake.classdef.FakeClassEdge;
 import inherit.fake.classdef.FakeParentOfEdge;
-
-import java.util.Map;
 
 public abstract class FakeParentOfEdgeExporter {
 

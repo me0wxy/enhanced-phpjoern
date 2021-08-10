@@ -11,13 +11,13 @@ import ast.php.statements.blockstarters.TraitAdaptations;
 import ast.php.statements.blockstarters.UseTrait;
 import filesystem.PHPIncludeMapFactory;
 import inherit.fake.classdef.FakeClassCreator;
-import inherit.fake.classdef.FakeClassEdge;
-import inherit.fake.classdef.FakeClassNode;
+import inherit.fake.classdef.FakeExtendsEdge;
+import inherit.fake.classdef.FakeImplementsEdge;
+import inherit.fake.classdef.FakeTraitEdge;
 import misc.MultiHashMap;
 import outputModules.common.Writer;
 import tools.php.ast2cpg.CommandLineInterface;
 
-import javax.xml.stream.Location;
 import java.util.*;
 
 public class PHPInheritFactory {
@@ -41,7 +41,12 @@ public class PHPInheritFactory {
     private static long baseLacked = 0;
     private static long baseLackedFlag = 0;
 
-    private static HashMap<ClassDef, String> baseLackedClassExtendsPairs = new HashMap<>();
+    // fake extends edges
+    private static HashMap<ClassDef, String> baseLackedExtendsPairs = new HashMap<>();
+    // fake implements edges
+    private static HashMap<ClassDef, String> getBaseLackedImplementsParis = new HashMap<>();
+    // fake trait edges
+    private static HashMap<ClassDef, String> baseLackedTraitPairs = new HashMap<>();
 
     // * ambiguous edges can be solved by relax mode
     private static long baseAmbiguous = 0;
@@ -257,7 +262,7 @@ public class PHPInheritFactory {
         return ret;
     }
 
-    private static boolean addFakeCHGEdge(IG ig, ClassDef srcClassDef, ClassDef destClassDef) {
+    private static boolean addFakeCHGEdge(IG ig, ClassDef srcClassDef, ClassDef destClassDef, String edgeType) {
 
         boolean ret = false;
 
@@ -267,7 +272,12 @@ public class PHPInheritFactory {
         ret = ig.addVertex(src);
         ig.addVertex(dest);
         // FakeClassEdge edge = new FakeClassEdge(srcNode, destNode);
-        ig.addEdge(new FakeClassEdge(src, dest));
+        if (edgeType.equals(FakeExtendsEdge.getEdgeType()))
+            ig.addEdge(new FakeExtendsEdge(src, dest));
+        else if (edgeType.equals(FakeImplementsEdge.getEdgeType()))
+            ig.addEdge(new FakeImplementsEdge(src, dest));
+        else if (edgeType.equals(FakeTraitEdge.getEdgeType()))
+            ig.addEdge(new FakeTraitEdge(src, dest));
 
         return ret;
     }
@@ -401,8 +411,8 @@ public class PHPInheritFactory {
                             if (baseLackedFlag == 3)
                             {
                                 baseLacked ++;
-                                // save baseLacked parent-child class(ClassDef)-classname(String) Pair
-                                baseLackedClassExtendsPairs.put(subClass, code);
+                                // save baseLacked parent-child class(ClassDef)-classname(String) Pair for extends chg edges
+                                baseLackedExtendsPairs.put(subClass, code);
                             }
                             if (baseAmbiguousFlag) {
                                 ambiguousClassExtendsNodes.put(classdef, code);
@@ -471,8 +481,11 @@ public class PHPInheritFactory {
                                 System.out.println("Child Interface : " + subClass.getName() + "( " + subClass.getNamewithNS() +
                                         " ) ==> Base Interface : " + superClass.getName() + "( " + superClass.getNamewithNS() + " )");
                             } else {
-                                if (baseLackedFlag == 3)
-                                    baseLacked ++;
+                                if (baseLackedFlag == 3) {
+                                    baseLacked++;
+                                    // save baseLacked parent-child class(ClassDef)-classname(String) Pair for implements edges
+                                    getBaseLackedImplementsParis.put(subClass, code);
+                                }
                                 if (baseAmbiguousFlag) {
                                     ambiguousClassImplementsNodes.put(classdef, code);
                                     baseAmbiguous++;
@@ -515,28 +528,11 @@ public class PHPInheritFactory {
         float lackedProption = inheritNodeNum == 0 ? 0 : ((float) (baseLacked + baseCycled) / (float) inheritNodeNum) * 100;
         System.out.println("Lacked Base Definition not handled: " + lackedProption + " %.");
 
-        // solve FAKE extends/implements edges
-        for (ClassDef subclass : baseLackedClassExtendsPairs.keySet())
-        {
-            FakeClassCreator fakeClassCreator = new FakeClassCreator();
-            String classname = baseLackedClassExtendsPairs.get(subclass);
-            // the fake class gets the same funcid as subclass(Child Class)
-            String funcid = subclass.getProperty("funcid");
-            // the fake class gets the same fileid as subclass(Child Class)
-            Long fileid = subclass.getFileId();
 
-            CodeLocation codeloc = subclass.getLocation();
-            // get lineno
-            String lineno = Long.toString(codeloc.startLine);
-            // get endlineno
-            String endlineno = Long.toString(codeloc.endLine);
+        addFakeEdgesToCHG(ig, baseLackedExtendsPairs, FakeExtendsEdge.getEdgeType());
 
-            String flags = "";
+        addFakeEdgesToCHG(ig, getBaseLackedImplementsParis, FakeImplementsEdge.getEdgeType());
 
-            // create fake base class
-            ClassDef fakeClassDef = fakeClassCreator.createClassDefNode(classname, flags, funcid, fileid, lineno, endlineno);
-            addFakeCHGEdge(ig, subclass, fakeClassDef);
-        }
     }
 
     public static ClassDef getClassTraitByNamespace(String traitName) {
@@ -722,8 +718,10 @@ public class PHPInheritFactory {
                                 //System.out.println("Class : " + classCommon.getName() + " ( " + classCommon.getNamewithNS() +
                                 //        " ) --> Trait : " + traitName);
                             } else {
-                                if (traitLackedFlag == 3)
-                                    traitLacked ++;
+                                if (traitLackedFlag == 3) {
+                                    traitLacked++;
+                                    baseLackedTraitPairs.put(classCommon, traitName);
+                                }
                                 if (traitAmbiguousFlag) {
                                     ambiguousTraitNodes.put(traitName, classCommon);
                                     traitAmbiguous++;
@@ -760,6 +758,8 @@ public class PHPInheritFactory {
         System.out.println("Ambiguous not handled: " + ambiguousPropotion + " %.");
         float lackedProption = traitNodeNum == 0 ? 0 : ((float) traitLacked / (float) traitNodeNum) * 100;
         System.out.println("Lacked Trait Definition not handled: " + lackedProption + "%.");
+
+        addFakeEdgesToCHG(ig, baseLackedTraitPairs, FakeTraitEdge.getEdgeType());
     }
 
 
@@ -1036,5 +1036,40 @@ public class PHPInheritFactory {
         }
 
         System.out.println("Successfully connected " + connectedEdges + " ambiguous Trait Edges.");
+    }
+
+    private static void addFakeEdgesToCHG(IG ig, HashMap<ClassDef, String> baseLackedPairs, String edgeType)
+    {
+        // solve FAKE extends/implements edges
+        for (ClassDef subclass : baseLackedPairs.keySet())
+        {
+            FakeClassCreator fakeClassCreator = new FakeClassCreator();
+            String classname = baseLackedPairs.get(subclass);
+            // the fake class gets the same funcid as subclass(Child Class)
+            String funcid = subclass.getProperty("funcid");
+            // the fake class gets the same fileid as subclass(Child Class)
+            Long fileid = subclass.getFileId();
+
+            CodeLocation codeloc = subclass.getLocation();
+            // get lineno
+            String lineno = Long.toString(codeloc.startLine);
+            // get endlineno
+            String endlineno = Long.toString(codeloc.endLine);
+
+            String flags = "";
+
+            if (edgeType.equals(FakeExtendsEdge.getEdgeType()))
+                flags = FakeClassCreator.getClassClassFlags();
+            else if (edgeType.equals(FakeImplementsEdge.getEdgeType()))
+                flags = FakeClassCreator.getClassInterfaceFlags();
+            else if (edgeType.equals(FakeTraitEdge.getEdgeType()))
+                flags = FakeClassCreator.getClassTraitFlags();
+
+            // create fake base class
+            ClassDef fakeClassDef = fakeClassCreator.createClassDefNode(classname, flags, funcid, fileid, lineno, endlineno);
+
+            addFakeCHGEdge(ig, subclass, fakeClassDef, edgeType);
+
+        }
     }
 }

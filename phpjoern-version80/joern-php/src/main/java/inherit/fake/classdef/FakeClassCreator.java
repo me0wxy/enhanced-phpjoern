@@ -30,6 +30,22 @@ public class FakeClassCreator
     private static final String CLASS_CLASS = "";   // class has no flags
 
 
+    public static String getClassClassFlags()
+    {
+        return CLASS_CLASS;
+    }
+
+    public static String getClassInterfaceFlags()
+    {
+        return CLASS_INTERFACE;
+    }
+
+    public static String getClassTraitFlags()
+    {
+        return CLASS_TRAIT;
+    }
+
+
     // Create single class definition node -> ClassDef
 
     /**

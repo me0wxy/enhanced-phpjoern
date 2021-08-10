@@ -1,19 +1,22 @@
 package inherit.fake.classdef;
 
-import graphutils.Edge;
 import inherit.InheritExtendsEdge;
 import inherit.InheritNode;
 
-public class FakeClassEdge extends InheritExtendsEdge {
+public class FakeTraitEdge extends InheritExtendsEdge {
 
-    private static final String DEFAULT_LABEL = "FAKE_CHG_EDGE";
+    private static final String DEFAULT_LABEL = "FAKE_TRAIT";
 
-    public FakeClassEdge(InheritNode source, InheritNode destination) {
+    public FakeTraitEdge(InheritNode source, InheritNode destination) {
         super(source, destination);
     }
 
     public String getLabel() {
         return this.DEFAULT_LABEL;
+    }
+
+    public static String getEdgeType() {
+        return DEFAULT_LABEL;
     }
 
     @Override
