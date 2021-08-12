@@ -10,10 +10,10 @@ import ast.php.declarations.ClassDef;
 import ast.php.statements.blockstarters.TraitAdaptations;
 import ast.php.statements.blockstarters.UseTrait;
 import filesystem.PHPIncludeMapFactory;
-import inherit.fake.classdef.FakeClassCreator;
-import inherit.fake.classdef.FakeExtendsEdge;
-import inherit.fake.classdef.FakeImplementsEdge;
-import inherit.fake.classdef.FakeTraitEdge;
+import inherit.fake.FakeClassCreator;
+import inherit.fake.FakeExtendsEdge;
+import inherit.fake.FakeImplementsEdge;
+import inherit.fake.FakeTraitEdge;
 import misc.MultiHashMap;
 import outputModules.common.Writer;
 import tools.php.ast2cpg.CommandLineInterface;
@@ -44,7 +44,7 @@ public class PHPInheritFactory {
     // fake extends edges
     private static HashMap<ClassDef, String> baseLackedExtendsPairs = new HashMap<>();
     // fake implements edges
-    private static HashMap<ClassDef, String> getBaseLackedImplementsParis = new HashMap<>();
+    private static HashMap<ClassDef, String> baseLackedImplementsParis = new HashMap<>();
     // fake trait edges
     private static HashMap<ClassDef, String> baseLackedTraitPairs = new HashMap<>();
 
@@ -484,7 +484,7 @@ public class PHPInheritFactory {
                                 if (baseLackedFlag == 3) {
                                     baseLacked++;
                                     // save baseLacked parent-child class(ClassDef)-classname(String) Pair for implements edges
-                                    getBaseLackedImplementsParis.put(subClass, code);
+                                    baseLackedImplementsParis.put(subClass, code);
                                 }
                                 if (baseAmbiguousFlag) {
                                     ambiguousClassImplementsNodes.put(classdef, code);
@@ -531,7 +531,7 @@ public class PHPInheritFactory {
 
         addFakeEdgesToCHG(ig, baseLackedExtendsPairs, FakeExtendsEdge.getEdgeType());
 
-        addFakeEdgesToCHG(ig, getBaseLackedImplementsParis, FakeImplementsEdge.getEdgeType());
+        addFakeEdgesToCHG(ig, baseLackedImplementsParis, FakeImplementsEdge.getEdgeType());
 
     }
 

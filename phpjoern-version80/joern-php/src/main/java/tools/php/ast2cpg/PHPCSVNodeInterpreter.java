@@ -75,6 +75,7 @@ import ast.statements.jump.ThrowStatement;
 import cg.PHPCGFactory;
 import filesystem.PHPIncludeMapFactory;
 import inherit.PHPInheritFactory;
+import inherit.fake.FakeClassCreator;
 import inputModules.csv.PHPCSVNodeTypes;
 import inputModules.csv.KeyedCSV.KeyedCSVRow;
 import inputModules.csv.KeyedCSV.exceptions.InvalidCSVFile;
@@ -2845,6 +2846,8 @@ public class PHPCSVNodeInterpreter implements CSVRowInterpreter
 		long id = Long.parseLong(row.getFieldForKey(PHPCSVNodeTypes.NODE_ID));
 		ast.addNodeWithId(newNode, id);
 		newNode.setNodeId(id);
+
+		FakeClassCreator.updateFileLeastStmtPairs(fileid, newNode);
 
 		return id;
 	}

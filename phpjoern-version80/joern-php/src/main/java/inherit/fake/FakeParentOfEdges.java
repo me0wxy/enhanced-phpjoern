@@ -1,8 +1,6 @@
-package inherit.fake.classdef;
+package inherit.fake;
 
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 
 /**
  * Record the new Fake !!!! PARENT_OF !!!! edges for ClassDef Nodes(AST_CLASS node has 6 children nodes)

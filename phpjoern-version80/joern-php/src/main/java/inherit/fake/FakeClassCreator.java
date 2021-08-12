@@ -1,26 +1,31 @@
-package inherit.fake.classdef;
+package inherit.fake;
 
+import ast.FakeNode;
 import ast.NullNode;
 import ast.expressions.IntegerExpression;
 import ast.expressions.StringExpression;
+import ast.logical.statements.CompoundStatement;
 import ast.php.declarations.ClassDef;
+import ast.php.functionDef.TopLevelFunctionDef;
 import inputModules.csv.PHPCSVNodeTypes;
 import inputModules.csv.csv2ast.ASTUnderConstruction;
 import tools.php.ast2cpg.PHPCSVNodeInterpreter;
+
+import java.util.HashMap;
 
 /**
  * Fake ClassDef Node
  */
 public class FakeClassCreator
 {
-    // private long id;
+
     private ClassDef newNode;
 
     private static final ASTUnderConstruction ast = new ASTUnderConstruction();
 
     private static final String TYPE = "AST_CLASS";
     private static final String INTEGER_TYPE = "integer";
-    private static final String NULL_TYPE = "null";
+    private static final String NULL_TYPE = "NULL";
     private static final String STRING_TYPE = "string";
 
     private static final String LEAF_CHILDNUM = "0";
@@ -44,6 +49,9 @@ public class FakeClassCreator
     {
         return CLASS_TRAIT;
     }
+
+    // maintains a file's a least stmt_node(ordered by id)
+    private static HashMap<Long, CompoundStatement> fileLeastStmtPairs = new HashMap<>();
 
 
     // Create single class definition node -> ClassDef
@@ -93,8 +101,11 @@ public class FakeClassCreator
         ast.addNodeWithId(this.newNode, id);
         this.newNode.setNodeId(id);
 
+        CompoundStatement parentStmtNode = fileLeastStmtPairs.get(fileid);
+        FakeParentOfEdges.addFakeEdges(parentStmtNode.getNodeId(), id);
+
         // add newNode's information to FakeClassNode
-        FakeClassNode fakeNode = new FakeClassNode(
+        FakeNode fakeNode = new FakeNode(
                 Long.toString(id),  // id
                 this.newNode.getProperty(PHPCSVNodeTypes.LABEL.getName()),  // labels
                 this.newNode.getProperty(PHPCSVNodeTypes.TYPE.getName()),   // type
@@ -114,7 +125,7 @@ public class FakeClassCreator
 
         FakeClassNodeSet.addFakeClassNodes(fakeNode);
 
-        createChildNode(funcid, fileid, classid, lineno);
+        createChildNode(funcid, fileid, classid, lineno, endlineno);
         //System.out.println(FakeClassNodes.keys);
 
         return this.newNode;
@@ -124,45 +135,48 @@ public class FakeClassCreator
      * ClassDef(AST_CLASS) node has 6 children nodes
      *
      */
-    private void createChildNode(String funcid, Long fileid, Long classid, String lineno)
+    private void createChildNode(String funcid, Long fileid, Long classid, String lineno, String endlineno)
     {
+        long childnum = 0;
+
         // name child
-        StringExpression nameEndNode = createNameChild(this.newNode.getName(), funcid, fileid, classid, lineno);
+        StringExpression nameEndNode = createNameChild(this.newNode.getName(), funcid, fileid, classid, lineno, childnum ++);
         this.newNode.setClassname(nameEndNode);
         FakeParentOfEdges.addFakeEdges(this.newNode.getNodeId(), nameEndNode.getNodeId());
 
         // docComment child
-        NullNode docCommentEndNode = createNullChild(funcid, fileid, classid, lineno);
+        NullNode docCommentEndNode = createNullChild(funcid, fileid, classid, lineno, childnum ++);
         this.newNode.addChild(docCommentEndNode);
         FakeParentOfEdges.addFakeEdges(this.newNode.getNodeId(), docCommentEndNode.getNodeId());
 
         // extends child: NullNode
-        NullNode extendsEndNode = createNullChild(funcid, fileid, classid, lineno);
+        NullNode extendsEndNode = createNullChild(funcid, fileid, classid, lineno, childnum ++);
         this.newNode.addChild(extendsEndNode);
         FakeParentOfEdges.addFakeEdges(this.newNode.getNodeId(), extendsEndNode.getNodeId());
 
         // implements child: NullNode
-        NullNode implementsEndNode = createNullChild(funcid, fileid, classid, lineno);
+        NullNode implementsEndNode = createNullChild(funcid, fileid, classid, lineno, childnum ++);
         this.newNode.addChild(implementsEndNode);
         FakeParentOfEdges.addFakeEdges(this.newNode.getNodeId(), implementsEndNode.getNodeId());
 
-        // stmt child: NullNode
-        NullNode stmtEndNode = createNullChild(funcid, fileid, classid, lineno);
+        // toplevel child: TopLevelFunctionDef
+        TopLevelFunctionDef stmtEndNode = createTopLevelFunctionDefChild(funcid, fileid, classid, lineno, endlineno, childnum ++);
         this.newNode.addChild(stmtEndNode);
         FakeParentOfEdges.addFakeEdges(this.newNode.getNodeId(), stmtEndNode.getNodeId());
 
         // attributes child: NullNode
-        NullNode attributes = createNullChild(funcid, fileid, classid, lineno);
+        NullNode attributes = createNullChild(funcid, fileid, classid, lineno, childnum ++);
         this.newNode.addChild(attributes);
         FakeParentOfEdges.addFakeEdges(this.newNode.getNodeId(), attributes.getNodeId());
 
         // integer child: We don't care integer child
-        IntegerExpression integerExpression = createIntegerChild(funcid, fileid, classid, lineno);
+        IntegerExpression integerExpression = createIntegerChild(funcid, fileid, classid, lineno, childnum ++);
         this.newNode.setOffset(integerExpression);
         FakeParentOfEdges.addFakeEdges(this.newNode.getNodeId(), integerExpression.getNodeId());
+
     }
 
-    private StringExpression createNameChild(String classname, String funcid, Long fileid, Long classid, String lineno)
+    private StringExpression createNameChild(String classname, String funcid, Long fileid, Long classid, String lineno, long childnum)
     {
 
         StringExpression newNode = new StringExpression();
@@ -181,14 +195,14 @@ public class FakeClassCreator
         newNode.setNodeId(id);
 
         // add newNode's information to FakeClassNode
-        FakeClassNode fakeNode = new FakeClassNode(
+        FakeNode fakeNode = new FakeNode(
                 Long.toString(id),  // id
                 newNode.getProperty(PHPCSVNodeTypes.LABEL.getName()),  // labels
                 newNode.getProperty(PHPCSVNodeTypes.TYPE.getName()),   // type
-                newNode.getFlags(),    // flags
+                "",    // flags
                 lineno, // lineno
                 newNode.getEscapedCodeStr(), // code
-                LEAF_CHILDNUM, // childnum
+                Long.toString(childnum), // childnum
                 funcid, // funcid
                 "", // classname
                 "", // namespace
@@ -204,7 +218,49 @@ public class FakeClassCreator
         return newNode;
     }
 
-    private NullNode createNullChild(String funcid, Long fileid, Long classid, String lineno)
+    private TopLevelFunctionDef createTopLevelFunctionDefChild(String funcid, Long fileid, Long classid, String lineno, String endlineno, long childnum)
+    {
+        // ASTUnderConstruction ast = new ASTUnderConstruction();
+
+        TopLevelFunctionDef newNode = new TopLevelFunctionDef();
+
+        newNode.setProperty(PHPCSVNodeTypes.LABEL.getName(), PHPCSVNodeTypes.LABEL_AST);
+        newNode.setProperty(PHPCSVNodeTypes.TYPE.getName(), PHPCSVNodeTypes.TYPE_TOPLEVEL);
+        newNode.setFlags(PHPCSVNodeTypes.FLAG_TOPLEVEL_CLASS);
+        newNode.setProperty(PHPCSVNodeTypes.FUNCID.getName(), funcid);
+        newNode.setProperty(PHPCSVNodeTypes.CHILDNUM.getName(), LEAF_CHILDNUM);
+        newNode.setFileId(fileid);
+
+        PHPCSVNodeInterpreter.max_retval ++;
+        long id = PHPCSVNodeInterpreter.max_retval;
+        ast.addNodeWithId(newNode, id);
+        newNode.setNodeId(id);
+
+        // add newNode's information to FakeClassNode
+        FakeNode fakeNode = new FakeNode(
+                Long.toString(id),  // id
+                newNode.getProperty(PHPCSVNodeTypes.LABEL.getName()),  // labels
+                newNode.getProperty(PHPCSVNodeTypes.TYPE.getName()),   // type
+                newNode.getFlags(),    // flags
+                lineno, // lineno
+                "", // code
+                Long.toString(childnum), // childnum
+                funcid, // funcid
+                "", // classname
+                "", // namespace
+                endlineno,
+                "",
+                "",
+                Long.toString(fileid),
+                Long.toString(classid)
+        );
+
+        FakeClassNodeSet.addFakeClassNodes(fakeNode);
+
+        return newNode;
+    }
+
+    private NullNode createNullChild(String funcid, Long fileid, Long classid, String lineno, long childnum)
     {
         // ASTUnderConstruction ast = new ASTUnderConstruction();
 
@@ -222,14 +278,14 @@ public class FakeClassCreator
         newNode.setNodeId(id);
 
         // add newNode's information to FakeClassNode
-        FakeClassNode fakeNode = new FakeClassNode(
+        FakeNode fakeNode = new FakeNode(
                 Long.toString(id),  // id
                 newNode.getProperty(PHPCSVNodeTypes.LABEL.getName()),  // labels
                 newNode.getProperty(PHPCSVNodeTypes.TYPE.getName()),   // type
-                newNode.getFlags(),    // flags
+                "",    // flags
                 lineno, // lineno
                 "", // code
-                LEAF_CHILDNUM, // childnum
+                Long.toString(childnum), // childnum
                 funcid, // funcid
                 "", // classname
                 "", // namespace
@@ -245,7 +301,7 @@ public class FakeClassCreator
         return newNode;
     }
 
-    private IntegerExpression createIntegerChild(String funcid, Long fileid, Long classid, String lineno)
+    private IntegerExpression createIntegerChild(String funcid, Long fileid, Long classid, String lineno, long childnum)
     {
         IntegerExpression newNode = new IntegerExpression();
 
@@ -264,14 +320,14 @@ public class FakeClassCreator
         newNode.setNodeId(id);
 
         // add newNode's information to FakeClassNode
-        FakeClassNode fakeNode = new FakeClassNode(
+        FakeNode fakeNode = new FakeNode(
                 Long.toString(id),  // id
                 newNode.getProperty(PHPCSVNodeTypes.LABEL.getName()),  // labels
                 newNode.getProperty(PHPCSVNodeTypes.TYPE.getName()),   // type
-                newNode.getFlags(),    // flags
+                "",    // flags
                 lineno, // lineno
                 "", // code
-                LEAF_CHILDNUM, // childnum
+                Long.toString(childnum), // childnum
                 funcid, // funcid
                 "", // classname
                 "", // namespace
@@ -285,5 +341,20 @@ public class FakeClassCreator
         FakeClassNodeSet.addFakeClassNodes(fakeNode);
 
         return newNode;
+    }
+
+    public static void updateFileLeastStmtPairs(Long fileid, CompoundStatement stmtNode)
+    {
+        if ( !fileLeastStmtPairs.containsKey(fileid))
+            fileLeastStmtPairs.put(fileid, stmtNode);
+        else {
+            CompoundStatement oldStmtNode = fileLeastStmtPairs.get(fileid);
+            long oldStmtId = oldStmtNode.getNodeId();
+
+            long newStmtId = stmtNode.getNodeId();
+
+            if (newStmtId < oldStmtId)
+                fileLeastStmtPairs.put(fileid, stmtNode);
+        }
     }
 }

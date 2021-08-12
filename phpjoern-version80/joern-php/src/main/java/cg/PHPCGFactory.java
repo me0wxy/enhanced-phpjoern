@@ -34,6 +34,8 @@ public class PHPCGFactory {
 	private static MultiHashMap<String,FunctionDef> functionDefs = new MultiHashMap<String,FunctionDef>();
 	// maintains a list of function calls
 	private static LinkedList<CallExpressionBase> functionCalls = new LinkedList<CallExpressionBase>();
+	// maintains a set of built-in function calls, fake function call edge
+	private static HashMap<CallExpressionBase, String> defLackedFunctionCallPairs = new HashMap<>();
 
 
 	// maintains a map of known static method names (e.g., "B\A::foo" -> static function foo() in class A in namespace B)
@@ -150,6 +152,12 @@ public class PHPCGFactory {
 							for (FunctionDef functionKeyItem : functionDefs.get(functionKey)){
 								addCallEdgeWithIncludeCondition(cg, functionCall, functionKeyItem, functionKeyItem.getFileId());
 							}
+						}
+
+						// no definitions: add to
+						if (!found && !functionDefs.containsKey(functionKey))
+						{
+							defLackedFunctionCallPairs.put(functionCall, functionKey);
 						}
 
 					}

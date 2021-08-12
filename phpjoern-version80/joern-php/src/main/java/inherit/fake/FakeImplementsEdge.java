@@ -1,13 +1,13 @@
-package inherit.fake.classdef;
+package inherit.fake;
 
 import inherit.InheritExtendsEdge;
 import inherit.InheritNode;
 
-public class FakeTraitEdge extends InheritExtendsEdge {
+public class FakeImplementsEdge extends InheritExtendsEdge {
 
-    private static final String DEFAULT_LABEL = "FAKE_TRAIT";
+    private static final String DEFAULT_LABEL = "FAKE_IMPLEMENTS";
 
-    public FakeTraitEdge(InheritNode source, InheritNode destination) {
+    public FakeImplementsEdge(InheritNode source, InheritNode destination) {
         super(source, destination);
     }
 
@@ -15,7 +15,8 @@ public class FakeTraitEdge extends InheritExtendsEdge {
         return this.DEFAULT_LABEL;
     }
 
-    public static String getEdgeType() {
+    public static String getEdgeType()
+    {
         return DEFAULT_LABEL;
     }
 

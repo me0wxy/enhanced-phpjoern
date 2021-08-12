@@ -1,4 +1,4 @@
-package inherit.fake.classdef;
+package inherit.fake;
 
 import graphutils.Edge;
 

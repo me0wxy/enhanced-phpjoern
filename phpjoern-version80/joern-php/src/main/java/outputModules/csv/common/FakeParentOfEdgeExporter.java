@@ -1,6 +1,6 @@
 package outputModules.csv.common;
 
-import inherit.fake.classdef.FakeParentOfEdge;
+import inherit.fake.FakeParentOfEdge;
 
 public abstract class FakeParentOfEdgeExporter {
 

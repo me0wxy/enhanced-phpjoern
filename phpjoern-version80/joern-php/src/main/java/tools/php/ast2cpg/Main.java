@@ -9,7 +9,7 @@ import cfg.nodes.CFGNode;
 import filesystem.PHPIncludeMapFactory;
 import inherit.IG;
 import inherit.PHPInheritFactory;
-import inherit.fake.classdef.FakeClassNodeSet;
+import inherit.fake.FakeClassNodeSet;
 import org.apache.commons.cli.ParseException;
 
 import ast.php.functionDef.FunctionDef;
@@ -25,7 +25,6 @@ import ddg.DefUseCFG.DefUseCFG;
 import inputModules.csv.KeyedCSV.exceptions.InvalidCSVFile;
 import inputModules.csv.csvFuncExtractor.CSVFunctionExtractor;
 import outputModules.common.Writer;
-import outputModules.csv.CSVAppendWriterImpl;
 import outputModules.csv.MultiPairCSVAppendWriterImpl;
 import outputModules.csv.MultiPairCSVWriterImpl;
 import outputModules.csv.exporters.*;
@@ -148,21 +147,25 @@ public class Main {
 
 
 
-		// initialize writers
+		// initialize writers, append fake class nodes and rels into rels.csv and nodes.csv
 		MultiPairCSVAppendWriterImpl csvAppendWriter = new MultiPairCSVAppendWriterImpl();
-		csvAppendWriter.openRelsFile( ".", "rels.csv");
-		Writer.setWriterImpl( csvAppendWriter);
 
-		CSVFakeParentOfExporter.appendParentOfRels();
-
-		csvAppendWriter.closeRelsFile();
-
+		// TODO : nodes.csv to be rearranged, the new nodes cannot be appended to the end of the nodes.csv
+		// otherwise some error would occurred while constructing the ast tree
 		csvAppendWriter.openNodesFile(".", "nodes.csv");
 		Writer.setWriterImpl( csvAppendWriter);
 
 		CSVFakeNodeExporter.appendFakeNode();
 
 		csvAppendWriter.closeNodesFile();
+
+		// TODO : rels.csv, the new parent_of rels also cannot be appended to the end of the rels.csv directly
+		csvAppendWriter.openRelsFile( ".", "rels.csv");
+		Writer.setWriterImpl( csvAppendWriter);
+
+		CSVFakeParentOfExporter.appendParentOfRels();
+
+		csvAppendWriter.closeRelsFile();
 	}
 
 	private static void parseCommandLine(String[] args)	{

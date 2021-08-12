@@ -1,12 +1,10 @@
 package outputModules.csv.exporters;
 
 import databaseNodes.EdgeTypes;
-import inherit.fake.classdef.FakeParentOfEdge;
-import inherit.fake.classdef.FakeParentOfEdges;
+import inherit.fake.FakeParentOfEdge;
+import inherit.fake.FakeParentOfEdges;
 import outputModules.common.Writer;
 import outputModules.csv.common.FakeParentOfEdgeExporter;
-
-import java.util.Map;
 
 public class CSVFakeParentOfExporter extends FakeParentOfEdgeExporter {
 

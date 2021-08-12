@@ -1,13 +1,13 @@
 package outputModules.csv.exporters;
 
-import inherit.fake.classdef.FakeClassNode;
-import inherit.fake.classdef.FakeClassNodeSet;
+import ast.FakeNode;
+import inherit.fake.FakeClassNodeSet;
 import outputModules.common.Writer;
 import outputModules.csv.common.FakeNodeExporter;
 
 public class CSVFakeNodeExporter extends FakeNodeExporter {
 
-    public void addFakeNode(FakeClassNode fakeClassNode)
+    public void addFakeNode(FakeNode fakeClassNode)
     {
         Writer.appendNodes(
                 fakeClassNode.getFieldId(),
@@ -33,7 +33,7 @@ public class CSVFakeNodeExporter extends FakeNodeExporter {
      */
     public void appendFakeNode()
     {
-        for (FakeClassNode fakeClassNode : FakeClassNodeSet.fakeClassNodes)
+        for (FakeNode fakeClassNode : FakeClassNodeSet.fakeClassNodes)
         {
             addFakeNode(fakeClassNode);
         }
