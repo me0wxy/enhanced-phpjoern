@@ -4,13 +4,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import ast.expressions.ConditionalExpression;
-import ast.expressions.Constant;
-import ast.expressions.Expression;
+import ast.ASTNodeProperties;
+import ast.expressions.*;
 import ast.functionDef.FunctionDefBase;
 import ast.logical.statements.CompoundStatement;
 import ast.logical.statements.Statement;
-import ast.expressions.CoalesceExpression;
+import ast.php.expressions.MagicConstant;
 import ast.php.statements.blockstarters.IfElement;
 import ast.php.statements.blockstarters.IfStatement;
 import ast.php.statements.blockstarters.SwitchCase;
@@ -138,18 +137,10 @@ public class PHPCFGFactory extends CFGFactory {
 				switchBlock.appendCFG(caseBody);
 				
 				// determine label
-				// String label = switchCase.getValue() != null
-				//		? switchCase.getValue().getEscapedCodeStr()
-				//		: "default";
-				String label = "default";
-				if(switchCase.getValue() != null){
-					// "case CONSTANT:" (not handled in original version, causing NullPointerException)
-					if (switchCase.getValue() instanceof Constant){
-						label = ((Constant)switchCase.getValue()).getIdentifier().getNameChild().getEscapedCodeStr();
-					}
-					else
-						label = switchCase.getValue().getEscapedCodeStr();
-				}
+				// "case CONSTANT:" (not handled in original version, causing NullPointerException)
+				String label = switchCase.getValue() != null
+						? parseCaseLabel(switchCase.getValue())
+						: "default";
 				if( label.equals("default")) defaultExists = true;
 				
 				// connect condition to first statement of case
@@ -324,6 +315,31 @@ public class PHPCFGFactory extends CFGFactory {
 		{
 			// e.printStackTrace();
 			return newErrorInstance();
+		}
+	}
+
+	// used for Switch case only
+	public static String parseCaseLabel(Expression expression){
+		// string or int, return directly
+		if(expression instanceof StringExpression || expression instanceof IntegerExpression)
+			return expression.getEscapedCodeStr();
+		// string concat, parse left and right
+		else if(expression instanceof BinaryOperationExpression){
+			Expression left = ((BinaryOperationExpression)expression).getLeft();
+			Expression right = ((BinaryOperationExpression)expression).getRight();
+			return parseCaseLabel(left)+parseCaseLabel(right);
+		}
+		// constants, check in ConstMap
+		else if(expression instanceof Constant){
+			return ((Constant)expression).getIdentifier().getNameChild().getEscapedCodeStr();
+		}
+		else if(expression instanceof ClassConstantExpression) {
+			return ((ClassConstantExpression) expression).getConstantName().getEscapedCodeStr();
+		}
+		// others
+		else{
+			//System.err.println("wtf");
+			return "???";
 		}
 	}
 }
