@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import ast.expressions.ConditionalExpression;
+import ast.expressions.Constant;
 import ast.expressions.Expression;
 import ast.functionDef.FunctionDefBase;
 import ast.logical.statements.CompoundStatement;
@@ -137,9 +138,18 @@ public class PHPCFGFactory extends CFGFactory {
 				switchBlock.appendCFG(caseBody);
 				
 				// determine label
-				String label = switchCase.getValue() != null
-						? switchCase.getValue().getEscapedCodeStr()
-						: "default";
+				// String label = switchCase.getValue() != null
+				//		? switchCase.getValue().getEscapedCodeStr()
+				//		: "default";
+				String label = "default";
+				if(switchCase.getValue() != null){
+					// "case CONSTANT:" (not handled in original version, causing NullPointerException)
+					if (switchCase.getValue() instanceof Constant){
+						label = ((Constant)switchCase.getValue()).getIdentifier().getNameChild().getEscapedCodeStr();
+					}
+					else
+						label = switchCase.getValue().getEscapedCodeStr();
+				}
 				if( label.equals("default")) defaultExists = true;
 				
 				// connect condition to first statement of case
@@ -165,7 +175,7 @@ public class PHPCFGFactory extends CFGFactory {
 		}
 		catch (Exception e)
 		{
-			//e.printStackTrace();
+			e.printStackTrace();
 			return newErrorInstance();
 		}
 	}
