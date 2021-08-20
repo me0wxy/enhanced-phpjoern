@@ -279,19 +279,29 @@ public class PHPCFGFactory extends CFGFactory {
 			CondCFGBlock.addVertex(conditionContainer);
 			CondCFGBlock.addEdge(CondCFGBlock.getEntryNode(),conditionContainer);
 
-			CFGNode TrueExpression = new ASTNodeContainer(conditionalExpression.getTrueExpression());
-			CondCFGBlock.addVertex(TrueExpression);
-			CondCFGBlock.addEdge(conditionContainer,TrueExpression,CFGEdge.TRUE_LABEL);
-			CondCFGBlock.addEdge(TrueExpression,CondCFGBlock.getExitNode());
-
-			CFGNode FalseExpression = new ASTNodeContainer(conditionalExpression.getFalseExpression());
-			CondCFGBlock.addEdge(conditionContainer,FalseExpression,CFGEdge.FALSE_LABEL);
-			CondCFGBlock.addEdge(FalseExpression,CondCFGBlock.getExitNode());
+			if(conditionalExpression.getTrueExpression() != null){
+				CFGNode TrueExpression = new ASTNodeContainer(conditionalExpression.getTrueExpression());
+				CondCFGBlock.addVertex(TrueExpression);
+				CondCFGBlock.addEdge(conditionContainer,TrueExpression,CFGEdge.TRUE_LABEL);
+				CondCFGBlock.addEdge(TrueExpression,CondCFGBlock.getExitNode());
+			}
+			else{
+				CondCFGBlock.addEdge(conditionContainer,CondCFGBlock.getExitNode());
+			}
+			if(conditionalExpression.getFalseExpression() != null){
+				CFGNode FalseExpression = new ASTNodeContainer(conditionalExpression.getFalseExpression());
+				CondCFGBlock.addVertex(FalseExpression);
+				CondCFGBlock.addEdge(conditionContainer,FalseExpression,CFGEdge.FALSE_LABEL);
+				CondCFGBlock.addEdge(FalseExpression,CondCFGBlock.getExitNode());
+			}
+			else{
+				CondCFGBlock.addEdge(conditionContainer, CondCFGBlock.getExitNode());
+			}
 			return CondCFGBlock;
 		}
 		catch (Exception e)
 		{
-			// e.printStackTrace();
+			e.printStackTrace();
 			return newErrorInstance();
 		}
 	}
