@@ -44,6 +44,9 @@ public class PHPCSVNodeTypes
 	public static final String TYPE_FILE = "File";
 	public static final String TYPE_DIRECTORY = "Directory";
 
+	// wzw
+	public static final String TYPE_FILESYSTEM = "Filesystem";
+
 	// null nodes (leafs)
 	// used as dummy child for nodes with a fixed number of children
 	// that do not need a certain child in a given context, to keep

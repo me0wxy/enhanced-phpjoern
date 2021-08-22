@@ -10,6 +10,7 @@ import filesystem.PHPIncludeMapFactory;
 import inherit.IG;
 import inherit.PHPInheritFactory;
 import inherit.fake.FakeClassNodeSet;
+import inputModules.csv.csvFuncExtractor.CSVFixExtractor;
 import org.apache.commons.cli.ParseException;
 
 import ast.php.functionDef.FunctionDef;
@@ -26,6 +27,7 @@ import inputModules.csv.KeyedCSV.exceptions.InvalidCSVFile;
 import inputModules.csv.csvFuncExtractor.CSVFunctionExtractor;
 import outputModules.common.Writer;
 import outputModules.csv.MultiPairCSVAppendWriterImpl;
+import outputModules.csv.MultiPairCSVNewFileWriterImpl;
 import outputModules.csv.MultiPairCSVWriterImpl;
 import outputModules.csv.exporters.*;
 import udg.CFGToUDGConverter;
@@ -39,6 +41,8 @@ public class Main {
 
 	// converters
 	static CSVFunctionExtractor extractor = new CSVFunctionExtractor();
+	static CSVFixExtractor fixExtractor = new CSVFixExtractor();
+
 	//static PHPCFGFactory cfgFactory = new PHPCFGFactory();
 	static ASTToCFGConverter ast2cfgConverter = new ASTToCFGConverter();
 	static CFGToUDGConverter cfgToUDG = new CFGToUDGConverter();
@@ -53,14 +57,17 @@ public class Main {
 	// my own defined exporters
 	static CSVFakeParentOfExporter CSVFakeParentOfExporter = new CSVFakeParentOfExporter();
 	static CSVFakeNodeExporter CSVFakeNodeExporter = new CSVFakeNodeExporter();
+	// exporter for reorder node.csv and rels.csv
+	static NodesCSVFixExporter NodesCSVFixExporter = new NodesCSVFixExporter();
+	static EdgesCSVFixExporter EdgesCSVFixExporter = new EdgesCSVFixExporter();
 
 	public static void main(String[] args) throws InvalidCSVFile, IOException {
 		// parse command line
 		parseCommandLine(args);
 
 		// initialize readers
-		String nodeFilename = cmdLine.getNodeFile();
-		String edgeFilename = cmdLine.getEdgeFile();
+		String nodeFilename = cmdLine.getNodeFile();	// nodes.csv
+		String edgeFilename = cmdLine.getEdgeFile();	// rels.csv
 		FileReader nodeFileReader = new FileReader(nodeFilename);
 		FileReader edgeFileReader = new FileReader(edgeFilename);
 
@@ -115,7 +122,6 @@ public class Main {
 		System.out.println();
 		System.out.println("ast.so 70 new AST node kinds");
 		System.out.println("----------------------------------------");
-
 		System.out.println("The number of AST_NULLABEL = " + PHPCSVNodeInterpreter.counter_new_NULLABALE);
 		System.out.println("The number of AST_ARROW_FUNC = " + PHPCSVNodeInterpreter.counter_new_ARROW_FUNC);
 		System.out.println("The number of AST_CLASS_NAME = " + PHPCSVNodeInterpreter.counter_new_CLASS_NAME);
@@ -124,7 +130,6 @@ public class Main {
 		System.out.println();
 		System.out.println("ast.so 70 changed AST node kinds");
 		System.out.println("----------------------------------------");
-
 		System.out.println("The number of AST_CLASS = " + PHPCSVNodeInterpreter.counter_CLASS);
 		System.out.println("The number of AST_CLOSURE = " + PHPCSVNodeInterpreter.counter_CLOSURE);
 		System.out.println("The number of AST_CONST_ELEM = " + PHPCSVNodeInterpreter.counter_CONST_ELEM);
@@ -134,7 +139,6 @@ public class Main {
 		System.out.println();
 		System.out.println("ast.so 80 new AST node kinds");
 		System.out.println("----------------------------------------");
-
 		System.out.println("The number of AST_ATTRIBUTE_LIST = " + PHPCSVNodeInterpreter.counter_new_ATTRIBUTE_LIST);
 		System.out.println("The number of AST_ATTRIBUTE_GROUP = " + PHPCSVNodeInterpreter.counter_new_ATTRIBUTE_GROUP);
 		System.out.println("The number of AST_ATTRIBUTE = " + PHPCSVNodeInterpreter.counter_new_ATTRIBUTE);
@@ -145,8 +149,6 @@ public class Main {
 		System.out.println(FakeClassNodeSet.fakeClassNodes);
 
 
-
-
 		// initialize writers, append fake class nodes and rels into rels.csv and nodes.csv
 		MultiPairCSVAppendWriterImpl csvAppendWriter = new MultiPairCSVAppendWriterImpl();
 
@@ -154,18 +156,38 @@ public class Main {
 		// otherwise some error would occurred while constructing the ast tree
 		csvAppendWriter.openNodesFile(".", "nodes.csv");
 		Writer.setWriterImpl( csvAppendWriter);
-
 		CSVFakeNodeExporter.appendFakeNode();
-
 		csvAppendWriter.closeNodesFile();
 
 		// TODO : rels.csv, the new parent_of rels also cannot be appended to the end of the rels.csv directly
 		csvAppendWriter.openRelsFile( ".", "rels.csv");
 		Writer.setWriterImpl( csvAppendWriter);
-
 		CSVFakeParentOfExporter.appendParentOfRels();
-
 		csvAppendWriter.closeRelsFile();
+
+		// Fix nodes.csv
+		FileReader fixNodeFileReader = new FileReader(nodeFilename);
+		FileReader fixedgeFileReader = new FileReader(edgeFilename);
+		// initialize converters
+		fixExtractor.setInterpreters(new PHPCSVNodeInterpreter(), new PHPCSVEdgeInterpreter());
+		fixExtractor.initialize(fixNodeFileReader, fixedgeFileReader);
+
+		fixExtractor.addCSVRows();
+
+		// write new reordered nodes.csv and rels.csv to new_nodes.csv and new_rels.csv
+		// initialize writers
+		MultiPairCSVNewFileWriterImpl csvNewWriter = new MultiPairCSVNewFileWriterImpl();
+		csvNewWriter.createNewEdgeFile( ".", "rels.csv");
+		Writer.setWriterImpl( csvNewWriter);
+		EdgesCSVFixExporter.addReorderEdges();
+		csvNewWriter.closeRelsFile();
+
+		csvNewWriter = new MultiPairCSVNewFileWriterImpl();
+		csvNewWriter.createNewNodeFile(".", "nodes.csv");
+		Writer.setWriterImpl( csvNewWriter);
+		NodesCSVFixExporter.addReorderNodes();
+		csvNewWriter.closeNodesFile();
+
 	}
 
 	private static void parseCommandLine(String[] args)	{

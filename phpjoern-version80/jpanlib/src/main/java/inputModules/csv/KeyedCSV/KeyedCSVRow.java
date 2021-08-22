@@ -33,6 +33,12 @@ public class KeyedCSVRow
 		String val = values.get(key);
 		return (null == val) ? "" : val;
 	}
+
+	public void setFieldForKey(CSVKey key, String new_value)
+	{
+		String val = values.get(key);
+		values.put(key, new_value);
+	}
 	
 	@Override
 	public String toString()
