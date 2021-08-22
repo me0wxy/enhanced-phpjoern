@@ -4,12 +4,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import ast.expressions.ConditionalExpression;
-import ast.expressions.Expression;
+import ast.ASTNodeProperties;
+import ast.expressions.*;
 import ast.functionDef.FunctionDefBase;
 import ast.logical.statements.CompoundStatement;
 import ast.logical.statements.Statement;
-import ast.expressions.CoalesceExpression;
+import ast.php.expressions.MagicConstant;
 import ast.php.statements.blockstarters.IfElement;
 import ast.php.statements.blockstarters.IfStatement;
 import ast.php.statements.blockstarters.SwitchCase;
@@ -137,8 +137,9 @@ public class PHPCFGFactory extends CFGFactory {
 				switchBlock.appendCFG(caseBody);
 				
 				// determine label
+				// "case CONSTANT:" (not handled in original version, causing NullPointerException)
 				String label = switchCase.getValue() != null
-						? switchCase.getValue().getEscapedCodeStr()
+						? parseCaseLabel(switchCase.getValue())
 						: "default";
 				if( label.equals("default")) defaultExists = true;
 				
@@ -165,7 +166,7 @@ public class PHPCFGFactory extends CFGFactory {
 		}
 		catch (Exception e)
 		{
-			//e.printStackTrace();
+			e.printStackTrace();
 			return newErrorInstance();
 		}
 	}
@@ -278,19 +279,29 @@ public class PHPCFGFactory extends CFGFactory {
 			CondCFGBlock.addVertex(conditionContainer);
 			CondCFGBlock.addEdge(CondCFGBlock.getEntryNode(),conditionContainer);
 
-			CFGNode TrueExpression = new ASTNodeContainer(conditionalExpression.getTrueExpression());
-			CondCFGBlock.addVertex(TrueExpression);
-			CondCFGBlock.addEdge(conditionContainer,TrueExpression,CFGEdge.TRUE_LABEL);
-			CondCFGBlock.addEdge(TrueExpression,CondCFGBlock.getExitNode());
-
-			CFGNode FalseExpression = new ASTNodeContainer(conditionalExpression.getFalseExpression());
-			CondCFGBlock.addEdge(conditionContainer,FalseExpression,CFGEdge.FALSE_LABEL);
-			CondCFGBlock.addEdge(FalseExpression,CondCFGBlock.getExitNode());
+			if(conditionalExpression.getTrueExpression() != null){
+				CFGNode TrueExpression = new ASTNodeContainer(conditionalExpression.getTrueExpression());
+				CondCFGBlock.addVertex(TrueExpression);
+				CondCFGBlock.addEdge(conditionContainer,TrueExpression,CFGEdge.TRUE_LABEL);
+				CondCFGBlock.addEdge(TrueExpression,CondCFGBlock.getExitNode());
+			}
+			else{
+				CondCFGBlock.addEdge(conditionContainer,CondCFGBlock.getExitNode());
+			}
+			if(conditionalExpression.getFalseExpression() != null){
+				CFGNode FalseExpression = new ASTNodeContainer(conditionalExpression.getFalseExpression());
+				CondCFGBlock.addVertex(FalseExpression);
+				CondCFGBlock.addEdge(conditionContainer,FalseExpression,CFGEdge.FALSE_LABEL);
+				CondCFGBlock.addEdge(FalseExpression,CondCFGBlock.getExitNode());
+			}
+			else{
+				CondCFGBlock.addEdge(conditionContainer, CondCFGBlock.getExitNode());
+			}
 			return CondCFGBlock;
 		}
 		catch (Exception e)
 		{
-			// e.printStackTrace();
+			e.printStackTrace();
 			return newErrorInstance();
 		}
 	}
@@ -314,6 +325,31 @@ public class PHPCFGFactory extends CFGFactory {
 		{
 			// e.printStackTrace();
 			return newErrorInstance();
+		}
+	}
+
+	// used for Switch case only
+	public static String parseCaseLabel(Expression expression){
+		// string or int, return directly
+		if(expression instanceof StringExpression || expression instanceof IntegerExpression)
+			return expression.getEscapedCodeStr();
+		// string concat, parse left and right
+		else if(expression instanceof BinaryOperationExpression){
+			Expression left = ((BinaryOperationExpression)expression).getLeft();
+			Expression right = ((BinaryOperationExpression)expression).getRight();
+			return parseCaseLabel(left)+parseCaseLabel(right);
+		}
+		// constants, check in ConstMap
+		else if(expression instanceof Constant){
+			return ((Constant)expression).getIdentifier().getNameChild().getEscapedCodeStr();
+		}
+		else if(expression instanceof ClassConstantExpression) {
+			return ((ClassConstantExpression) expression).getConstantName().getEscapedCodeStr();
+		}
+		// others
+		else{
+			//System.err.println("wtf");
+			return "???";
 		}
 	}
 }
